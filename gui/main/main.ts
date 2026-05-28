@@ -28,7 +28,7 @@ function createWindow(): BrowserWindow {
     height: 800,
     minWidth: 900,
     minHeight: 600,
-    title: `FT GUI v${version}`,
+    title: 'FT GUI',
     backgroundColor: '#0f0f10',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     webPreferences: {

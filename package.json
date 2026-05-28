@@ -83,6 +83,7 @@
       ],
       "icon": "build/icons",
       "category": "Utility",
+      "artifactName": "FT-GUI.${ext}",
       "desktop": {
         "entry": {
           "Name": "FT GUI",
