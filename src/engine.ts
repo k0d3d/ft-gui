@@ -52,8 +52,10 @@ const KNOWN_ENGINES: Record<string, EngineConfig> = {
   openai: {
     type: 'api',
     invoke: async (prompt, engine) => {
-      const { apiKey, baseUrl } = getOpenAiConfig();
-      const model = engine?.model || 'gpt-4o';
+      const config = getOpenAiConfig();
+      const apiKey = config.apiKey;
+      const baseUrl = config.baseUrl;
+      const model = engine?.model || config.model;
 
       if (!apiKey) {
         throw new Error(
@@ -85,11 +87,12 @@ const KNOWN_ENGINES: Record<string, EngineConfig> = {
   },
 };
 
-export function getOpenAiConfig(): { apiKey?: string; baseUrl: string } {
+export function getOpenAiConfig(): { apiKey?: string; baseUrl: string; model: string } {
   const prefs = loadPreferences();
   const apiKey = prefs.openaiApiKey?.trim() || process.env.OPENAI_API_KEY?.trim();
   const baseUrl = (prefs.openaiBaseUrl?.trim() || process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').trim();
-  return { apiKey, baseUrl };
+  const model = (prefs.openaiModel?.trim() || process.env.OPENAI_MODEL || 'gpt-4o').trim();
+  return { apiKey, baseUrl, model };
 }
 
 /** Order used when auto-detecting. */

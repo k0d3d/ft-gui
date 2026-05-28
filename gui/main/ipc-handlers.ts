@@ -91,17 +91,20 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     const prefs = loadPreferences()
     return {
       baseUrl: prefs.openaiBaseUrl?.trim() || 'https://api.openai.com/v1',
+      model: prefs.openaiModel?.trim() || 'gpt-4o',
       hasApiKey: Boolean(prefs.openaiApiKey?.trim()),
     }
   })
 
-  ipcMain.handle('preferences:saveOpenAi', (_e, opts: { baseUrl?: string; apiKey?: string; clearApiKey?: boolean }) => {
+  ipcMain.handle('preferences:saveOpenAi', (_e, opts: { baseUrl?: string; model?: string; apiKey?: string; clearApiKey?: boolean }) => {
     const prefs = loadPreferences()
     const next = { ...prefs }
     const trimmedBaseUrl = opts.baseUrl?.trim()
+    const trimmedModel = opts.model?.trim()
     const trimmedApiKey = opts.apiKey?.trim()
 
     next.openaiBaseUrl = trimmedBaseUrl || 'https://api.openai.com/v1'
+    next.openaiModel = trimmedModel || 'gpt-4o'
     if (opts.clearApiKey) {
       delete next.openaiApiKey
     } else if (trimmedApiKey) {
@@ -112,6 +115,7 @@ export function registerIpcHandlers(win: BrowserWindow): void {
 
     return {
       baseUrl: next.openaiBaseUrl,
+      model: next.openaiModel,
       hasApiKey: Boolean(next.openaiApiKey?.trim()),
     }
   })

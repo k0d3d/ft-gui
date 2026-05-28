@@ -7,6 +7,7 @@ export interface Preferences {
   deleteBookmarkQueryId?: string;
   openaiBaseUrl?: string;
   openaiApiKey?: string;
+  openaiModel?: string;
 }
 
 export function loadPreferences(): Preferences {

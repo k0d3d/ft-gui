@@ -58,6 +58,7 @@ export interface MediaProgressEvent {
 
 export interface OpenAiSettingsView {
   baseUrl: string
+  model: string
   hasApiKey: boolean
 }
 
@@ -113,7 +114,7 @@ export interface IpcChannels {
   ]
   'paths:data': [filters: undefined, result: string]
   'preferences:getOpenAi': [filters: undefined, result: OpenAiSettingsView]
-  'preferences:saveOpenAi': [opts: { baseUrl?: string; apiKey?: string; clearApiKey?: boolean }, result: OpenAiSettingsView]
+  'preferences:saveOpenAi': [opts: { baseUrl?: string; model?: string; apiKey?: string; clearApiKey?: boolean }, result: OpenAiSettingsView]
   'app:performance:get': [filters: undefined, result: { startup: StartupMetric[] }]
   'sync:start': [opts: SyncGuiOptions, result: { jobId: string }]
   'classify:llm:start': [opts: ClassifyGuiOptions, result: { jobId: string }]

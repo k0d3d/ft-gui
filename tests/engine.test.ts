@@ -17,10 +17,16 @@ test('preferences: round-trip save and load', async () => {
     assert.deepEqual(loadPreferences(), {});
 
     // Save and reload
-    savePreferences({ defaultEngine: 'claude', openaiBaseUrl: 'https://example.invalid/v1', openaiApiKey: 'sk-test' });
+    savePreferences({
+      defaultEngine: 'claude',
+      openaiBaseUrl: 'https://example.invalid/v1',
+      openaiApiKey: 'sk-test',
+      openaiModel: 'gpt-4.1-mini',
+    });
     assert.equal(loadPreferences().defaultEngine, 'claude');
     assert.equal(loadPreferences().openaiBaseUrl, 'https://example.invalid/v1');
     assert.equal(loadPreferences().openaiApiKey, 'sk-test');
+    assert.equal(loadPreferences().openaiModel, 'gpt-4.1-mini');
 
     // Overwrite
     savePreferences({ defaultEngine: 'codex' });
@@ -192,11 +198,13 @@ test('openai config prefers saved preferences over environment variables', async
     savePreferences({
       openaiApiKey: 'pref-key',
       openaiBaseUrl: 'https://prefs.example/v1',
+      openaiModel: 'gpt-4.1',
     });
 
     assert.deepEqual(getOpenAiConfig(), {
       apiKey: 'pref-key',
       baseUrl: 'https://prefs.example/v1',
+      model: 'gpt-4.1',
     });
   } finally {
     process.env.FT_DATA_DIR = origDataDir;
