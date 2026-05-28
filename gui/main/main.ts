@@ -7,6 +7,21 @@ const require = createRequire(import.meta.url)
 const { version } = require('../../package.json') as { version: string }
 
 // Auto-updater — only active in packaged builds
+async function runStartupHealthCheck(win: BrowserWindow) {
+  try {
+    const { runHealthChecks } = await import('../../src/health-check.js')
+    const report = await runHealthChecks()
+    if (report.critical) {
+      // Delay slightly so the renderer has time to mount
+      setTimeout(() => {
+        win.webContents.send('health:critical', report)
+      }, 2500)
+    }
+  } catch {
+    // health check failure is never fatal to app startup
+  }
+}
+
 async function setupAutoUpdater(win: BrowserWindow) {
   if (!app.isPackaged) return
   try {
@@ -85,6 +100,7 @@ if (!gotLock) {
   app.whenReady().then(() => {
     const win = createWindow()
     setupAutoUpdater(win)
+    runStartupHealthCheck(win)
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()

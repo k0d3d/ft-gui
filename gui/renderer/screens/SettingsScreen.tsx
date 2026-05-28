@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { invoke, useIpcEvent } from '../hooks/useIpc'
-import { CheckCircle, Trash2, AlertTriangle, Camera, RotateCcw, RefreshCw } from 'lucide-react'
+import { CheckCircle, Trash2, AlertTriangle, Camera, RotateCcw, RefreshCw, Activity, Zap } from 'lucide-react'
 
 interface SnapshotResult {
   snapshotPath: string
@@ -21,6 +21,45 @@ export function SettingsScreen() {
   const [total, setTotal] = useState<number | null>(null)
   const [indexing, setIndexing] = useState(false)
   const [indexMsg, setIndexMsg] = useState('')
+
+  // Diagnostics state
+  type CheckStatus = 'ok' | 'warn' | 'error' | 'skip'
+  interface CheckResult {
+    id: string; name: string; category: string; status: CheckStatus
+    detail: string; fix?: string; autofixable?: boolean
+  }
+  interface HealthReport { checks: CheckResult[]; ranAt: string; critical: boolean }
+  const [health, setHealth] = useState<HealthReport | null>(null)
+  const [healthRunning, setHealthRunning] = useState(false)
+  const [autofixing, setAutofixing] = useState(false)
+  const [autofixResult, setAutofixResult] = useState<string | null>(null)
+
+  async function runHealth() {
+    setHealthRunning(true)
+    setAutofixResult(null)
+    try {
+      const r = await invoke<HealthReport>('health:run')
+      setHealth(r)
+    } finally {
+      setHealthRunning(false)
+    }
+  }
+
+  async function runAutofix() {
+    setAutofixing(true)
+    setAutofixResult(null)
+    try {
+      const r = await invoke<{ found: boolean; queryId?: string; error?: string }>('health:autofix')
+      if (r.found) {
+        setAutofixResult(`✓ QueryId updated to ${r.queryId} — re-running checks…`)
+        await runHealth()
+      } else {
+        setAutofixResult(`✗ Auto-update failed: ${r.error}`)
+      }
+    } finally {
+      setAutofixing(false)
+    }
+  }
 
   // Snapshot state
   const [snapshotLabel, setSnapshotLabel] = useState('')
@@ -144,6 +183,79 @@ export function SettingsScreen() {
           <div className="flex items-center gap-2 mt-3 text-xs text-mint">
             <CheckCircle size={12} /> {indexMsg}
           </div>
+        )}
+      </Section>
+
+      {/* Diagnostics */}
+      <Section title="Diagnostics">
+        <p className="text-sm text-gray-500 mb-4">
+          Validates all endpoints and local files the app depends on. Run this if sync, delete, or search stops working.
+        </p>
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={runHealth}
+            disabled={healthRunning}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/[0.06] text-gray-300 text-sm hover:bg-white/[0.1] disabled:opacity-40 transition-colors"
+          >
+            <Activity size={14} className={healthRunning ? 'animate-pulse' : ''} />
+            {healthRunning ? 'Running…' : health ? 'Re-run checks' : 'Run health check'}
+          </button>
+          {health && (
+            <span className={`text-xs ${health.critical ? 'text-coral' : 'text-mint'}`}>
+              {health.critical ? '⚠ Issues found' : '✓ All checks passed'} · {new Date(health.ranAt).toLocaleTimeString()}
+            </span>
+          )}
+        </div>
+
+        {health && (
+          <div className="space-y-2 mb-4">
+            {(['local', 'session', 'api'] as const).map(cat => {
+              const catChecks = health.checks.filter(c => c.category === cat)
+              if (!catChecks.length) return null
+              const catLabel = cat === 'local' ? 'Local' : cat === 'session' ? 'Browser session' : 'X API endpoints'
+              return (
+                <div key={cat}>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-700 mb-1.5 mt-3">{catLabel}</p>
+                  {catChecks.map(check => (
+                    <div key={check.id} className={`flex gap-3 p-3 rounded-lg border mb-1.5 ${
+                      check.status === 'ok'    ? 'bg-mint/5 border-mint/15'    :
+                      check.status === 'warn'  ? 'bg-amber/5 border-amber/15'  :
+                      check.status === 'error' ? 'bg-coral/5 border-coral/20'  :
+                                                 'bg-white/[0.02] border-white/[0.05]'
+                    }`}>
+                      <span className="mt-0.5 shrink-0 text-base leading-none">
+                        {check.status === 'ok' ? '✓' : check.status === 'warn' ? '⚠' : check.status === 'error' ? '✗' : '–'}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-medium ${
+                          check.status === 'ok' ? 'text-mint' : check.status === 'warn' ? 'text-amber' :
+                          check.status === 'error' ? 'text-coral' : 'text-gray-600'
+                        }`}>{check.name}</p>
+                        <p className="text-xs text-gray-500 mt-0.5 break-all">{check.detail}</p>
+                        {check.fix && <p className="text-xs text-gray-600 mt-1 italic">{check.fix}</p>}
+                        {check.autofixable && (
+                          <button
+                            onClick={runAutofix}
+                            disabled={autofixing}
+                            className="flex items-center gap-1.5 mt-2 px-3 py-1 rounded text-xs bg-periwinkle/20 text-periwinkle hover:bg-periwinkle/30 disabled:opacity-40 transition-colors"
+                          >
+                            <Zap size={11} />
+                            {autofixing ? 'Fetching new queryId from X bundle…' : 'Auto-update queryId'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {autofixResult && (
+          <p className={`text-xs mt-1 ${autofixResult.startsWith('✓') ? 'text-mint' : 'text-coral'}`}>
+            {autofixResult}
+          </p>
         )}
       </Section>
 

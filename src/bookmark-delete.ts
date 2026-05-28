@@ -1,14 +1,20 @@
 import type { BrowserSession } from './graphql-bookmarks.js';
+import { loadPreferences } from './preferences.js';
 
 const X_PUBLIC_BEARER =
   'AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA';
 const CHROME_UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36';
 
-// Refresh by searching for `operationName:"DeleteBookmark"` in X's main JS bundle
-// at abs.twimg.com/responsive-web/client-web/main.<hash>.js
-const DELETE_BOOKMARK_QUERY_ID = 'Wlmlj2-xzyS1GN3a6cj-mQ';
+// Hardcoded fallback — updated by health check auto-heal via preferences file.
+// To manually refresh: run scripts/find-delete-query-id.ts
+const DELETE_BOOKMARK_QUERY_ID_FALLBACK = 'Wlmlj2-xzyS1GN3a6cj-mQ';
+
+function getDeleteQueryId(): string {
+  return loadPreferences().deleteBookmarkQueryId ?? DELETE_BOOKMARK_QUERY_ID_FALLBACK;
+}
 const DELETE_BOOKMARK_OPERATION = 'DeleteBookmark';
+export const DELETE_BOOKMARK_OPERATION_NAME = DELETE_BOOKMARK_OPERATION;
 
 const DELAY_MS = 250; // between requests to avoid rate-limiting
 
@@ -25,10 +31,11 @@ function buildHeaders(session: BrowserSession): Record<string, string> {
 }
 
 async function deleteSingle(tweetId: string, session: BrowserSession): Promise<boolean> {
-  const url = `https://x.com/i/api/graphql/${DELETE_BOOKMARK_QUERY_ID}/${DELETE_BOOKMARK_OPERATION}`;
+  const qid = getDeleteQueryId();
+  const url = `https://x.com/i/api/graphql/${qid}/${DELETE_BOOKMARK_OPERATION}`;
   const body = JSON.stringify({
     variables: { tweet_id: tweetId },
-    queryId: DELETE_BOOKMARK_QUERY_ID,
+    queryId: qid,
   });
   const res = await fetch(url, {
     method: 'POST',

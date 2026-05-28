@@ -3,6 +3,8 @@ import { ensureDataDir, preferencesPath } from './paths.js';
 
 export interface Preferences {
   defaultEngine?: string;
+  /** Overrides the hardcoded DeleteBookmark GraphQL queryId. Auto-set by health check. */
+  deleteBookmarkQueryId?: string;
 }
 
 export function loadPreferences(): Preferences {

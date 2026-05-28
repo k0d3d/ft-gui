@@ -22,6 +22,7 @@ import { classifyWithLlm, classifyDomainsWithLlm } from '../../src/bookmark-clas
 import { fetchBookmarkMediaBatch } from '../../src/bookmark-media.js'
 import { resolveEngine } from '../../src/engine.js'
 import { getVizData } from '../../src/bookmarks-viz.js'
+import { runHealthChecks, autoHealDeleteQueryId } from '../../src/health-check.js'
 import type {
   BookmarkTimelineFilters,
   SearchOptions,
@@ -95,6 +96,9 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   ipcMain.handle('classify:regex', () => classifyAndRebuild())
 
   ipcMain.handle('viz:getData', () => getVizData())
+
+  ipcMain.handle('health:run', () => runHealthChecks())
+  ipcMain.handle('health:autofix', () => autoHealDeleteQueryId())
 
   // ── Long-running: sync ───────────────────────────────────────────────────
 

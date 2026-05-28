@@ -32,6 +32,7 @@ export type Screen =
 export function App() {
   const [screen, setScreen] = useState<Screen>('dashboard')
   const [updateVersion, setUpdateVersion] = useState<string | null>(null)
+  const [healthWarning, setHealthWarning] = useState<string | null>(null)
 
   useEffect(() => {
     if (!window.ftApi) return
@@ -41,6 +42,17 @@ export function App() {
     }
     const h = window.ftApi.on('app:update-ready', handler)
     return () => window.ftApi.off('app:update-ready', h)
+  }, [])
+
+  useEffect(() => {
+    if (!window.ftApi) return
+    const handler = (data: unknown) => {
+      const report = data as { checks: { status: string; name: string }[] }
+      const failed = report.checks.filter(c => c.status === 'error').map(c => c.name)
+      if (failed.length) setHealthWarning(`Issue detected: ${failed.join(', ')} — check Settings → Diagnostics`)
+    }
+    const h = window.ftApi.on('health:critical', handler)
+    return () => window.ftApi.off('health:critical', h)
   }, [])
 
   function nav(s: Screen) {
@@ -72,6 +84,13 @@ export function App() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
+      {healthWarning && (
+        <div className="flex items-center justify-center gap-3 px-4 py-1.5 bg-coral/10 border-b border-coral/20 text-xs text-coral">
+          ⚠ {healthWarning}
+          <button onClick={() => { nav('settings'); setHealthWarning(null) }} className="underline hover:no-underline ml-1">Open</button>
+          <button onClick={() => setHealthWarning(null)} className="text-coral/50 hover:text-coral ml-1">✕</button>
+        </div>
+      )}
       {updateVersion && (
         <div className="flex items-center justify-center gap-3 px-4 py-1.5 bg-mint/10 border-b border-mint/20 text-xs text-mint">
           v{updateVersion} is ready — restart to update
