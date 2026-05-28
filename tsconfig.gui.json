@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "outDir": "dist-gui",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node"],
+    "paths": {
+      "@src/*": ["./src/*"]
+    }
+  },
+  "include": ["gui/**/*.ts", "gui/**/*.tsx"],
+  "exclude": ["node_modules", "dist", "dist-gui"]
+}

@@ -1235,3 +1235,32 @@ export function formatSearchResults(results: SearchResult[]): string {
     })
     .join('\n\n');
 }
+
+export async function resetClassification(ids: string[]): Promise<{ count: number }> {
+  const dbPath = twitterBookmarksIndexPath();
+  const db = await openDb(dbPath);
+  ensureMigrations(db);
+  try {
+    db.run('BEGIN TRANSACTION');
+    if (ids.length === 0) {
+      // Reset all bookmarks
+      db.run(
+        `UPDATE bookmarks SET categories = NULL, primary_category = 'unclassified', domains = NULL, primary_domain = NULL`
+      );
+    } else {
+      const placeholders = ids.map(() => '?').join(',');
+      db.run(
+        `UPDATE bookmarks SET categories = NULL, primary_category = 'unclassified', domains = NULL, primary_domain = NULL WHERE id IN (${placeholders})`,
+        ids
+      );
+    }
+    db.run('COMMIT');
+    saveDb(db, dbPath);
+    return { count: ids.length === 0 ? -1 : ids.length };
+  } catch (err) {
+    db.run('ROLLBACK');
+    throw err;
+  } finally {
+    db.close();
+  }
+}

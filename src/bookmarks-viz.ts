@@ -809,3 +809,8 @@ export async function renderViz(): Promise<string> {
 
   return sections.join('\n');
 }
+
+export type { VizData, GemBookmark };
+export async function getVizData(): Promise<VizData> {
+  return queryVizData();
+}

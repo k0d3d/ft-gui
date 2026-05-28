@@ -7,12 +7,17 @@
     "ft": "bin/ft.mjs",
     "fieldtheory": "bin/ft.mjs"
   },
+  "main": "dist-gui/main/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "tsx --test tests/**/*.test.ts",
     "dev": "tsx src/cli.ts",
     "start": "node dist/cli.js",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "gui:dev": "electron-vite dev -- --no-sandbox",
+    "gui:build": "electron-vite build",
+    "gui:preview": "electron-vite preview",
+    "gui:start": "electron . --no-sandbox"
   },
   "files": [
     "bin/",
@@ -28,6 +33,9 @@
     "type": "git",
     "url": "git+https://github.com/afar1/fieldtheory-cli.git"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": ["electron", "esbuild"]
+  },
   "keywords": [
     "bookmarks",
     "twitter",
@@ -40,15 +48,30 @@
     "cli"
   ],
   "dependencies": {
+    "clsx": "^2.1.1",
+    "class-variance-authority": "^0.7.1",
     "commander": "^14.0.3",
     "dotenv": "^17.3.1",
+    "lucide-react": "^0.511.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^2.15.3",
     "sql.js": "^1.14.1",
     "sql.js-fts5": "^1.4.0",
+    "tailwind-merge": "^2.6.0",
     "undici": "^6.25.0"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.3.7",
     "@types/sql.js": "^1.4.11",
+    "@vitejs/plugin-react": "^4.4.1",
+    "autoprefixer": "^10.4.21",
+    "electron": "^33.0.0",
+    "electron-vite": "^3.1.0",
+    "postcss": "^8.5.4",
+    "tailwindcss": "^3.4.17",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2"
   }
