@@ -112,9 +112,12 @@ Downloads images and video poster frames for bookmarks. Set an optional limit to
 
 ### Settings
 
-- **Data location** — shows the path to `~/.fieldtheory/bookmarks/`
+- **Data location** — shows the path to `~/.fieldtheory/bookmarks/` and your total bookmark count
 - **Rebuild index** — rebuilds the SQLite search index from the JSONL cache (preserves classification)
 - **Force rebuild** — drops all tables first (clears classification) then rebuilds from JSONL. Only use if the index is corrupted.
+- **Snapshot** — save a JSONL + SQL dump of the current library to `~/.fieldtheory/bookmarks/snapshots/`
+- **Load snapshot** — browse saved snapshots and restore to any of them; inline confirmation before overwrite
+- **Remove all bookmarks from X** — bulk un-bookmark your entire local library from X; checkbox confirmation required; your local library is unchanged
 
 ---
 
@@ -141,6 +144,36 @@ After a reset, the next classify run picks up the affected bookmarks as if they 
 - **Individual bookmarks** — Bookmark Detail screen
 - **Selected bookmarks** — multi-select in Browse → "Reset classification"
 - **All bookmarks** — Classify screen → "Reset all classifications first" before starting
+
+---
+
+## Snapshot — how it works
+
+**Settings → Snapshot.** Add an optional label and click **Take snapshot**.
+
+Saves three files to `~/.fieldtheory/bookmarks/snapshots/snapshot_<timestamp>_<label>/`:
+
+| File | What it contains |
+|---|---|
+| `bookmarks.jsonl` | Full raw bookmark cache — every synced tweet, unchanged |
+| `bookmarks.sql` | `CREATE TABLE` + one `INSERT INTO bookmarks` per row, covering all LLM classifications, subject domains, article enrichment, folder tags |
+| `manifest.json` | Timestamp, label, record count |
+
+**Why both JSONL and SQL?** The JSONL is the source of truth for raw tweet data. Classifications and enrichments live only in the SQLite DB (not in JSONL); the SQL dump captures that state so a restore is complete.
+
+---
+
+## Load snapshot — how it works
+
+**Settings → Load snapshot.** Lists all saved snapshots newest-first, showing date/time, label, and record count.
+
+Click **Restore** → an inline confirmation appears on that row. Click **Yes, restore** to proceed.
+
+Restore does two things:
+1. Copies `snapshot/bookmarks.jsonl` over your current `bookmarks.jsonl`
+2. Drops all DB tables, replays `snapshot/bookmarks.sql` (schema + all rows), rebuilds the FTS index
+
+After restore, Browse, Search, and Viz reflect the snapshot state immediately — no manual index rebuild needed.
 
 ---
 

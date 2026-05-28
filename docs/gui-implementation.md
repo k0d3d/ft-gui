@@ -82,8 +82,13 @@ The GUI is named **FT GUI**. It is built on top of [fieldtheory-cli](https://git
 #### Modified source files (`src/`)
 | File | Change |
 |---|---|
-| `bookmarks-db.ts` | Added `resetClassification(ids)` export |
+| `bookmarks-db.ts` | Added `resetClassification()`, `getAllTweetIds()`, `snapshotBookmarks()`, `listSnapshots()`, `restoreSnapshot()` |
 | `bookmarks-viz.ts` | Exported `getVizData()`, `VizData`, `GemBookmark` types |
+
+#### Build scripts
+| File | Purpose |
+|---|---|
+| `build/patch-appimage.mjs` | Post-pack: strips `X-AppImage-Version` from the AppImage `.desktop` file to prevent AppImageLauncher appending the version to the app name |
 
 ---
 
@@ -158,6 +163,21 @@ No IPC call needed — baked in at build time.
 ### Single-instance lock
 
 `app.requestSingleInstanceLock()` in `main.ts`. A second launch quits immediately and focuses the already-running window.
+
+---
+
+## Feature Summary by Version
+
+| Version | Feature | Source |
+|---|---|---|
+| 2.0.0 | Bulk delete from X (Browse multi-select + Sync option) | `src/bookmark-delete.ts`, `ipc-handlers.ts` |
+| 2.0.0 | Reset classification (Browse + Detail + Classify screen) | `bookmarks-db.ts::resetClassification()` |
+| 2.0.0 | Interactive Viz dashboard (14 Recharts panels) | `bookmarks-viz.ts::getVizData()` |
+| 2.1.0 | Packaging (AppImage, deb, dmg, exe), auto-updater, icons | `electron-builder` config, `electron-updater` |
+| 2.1.1 | AppImage patcher — strips `X-AppImage-Version` | `build/patch-appimage.mjs` |
+| 2.1.2 | Snapshot (JSONL + SQL dump) | `bookmarks-db.ts::snapshotBookmarks()` |
+| 2.1.2 | Load/restore snapshot | `bookmarks-db.ts::listSnapshots()`, `restoreSnapshot()` |
+| 2.1.2 | Remove all from X (Settings) | `bookmarks-db.ts::getAllTweetIds()`, `bookmark-delete.ts` |
 
 ---
 
