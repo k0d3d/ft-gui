@@ -85,7 +85,7 @@
       "depends": ["libgtk-3-0", "libnss3", "libxss1", "libgbm1"]
     },
     "appImage": {
-      "license": "MIT"
+      "license": "LICENSE"
     },
     "mac": {
       "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }],
