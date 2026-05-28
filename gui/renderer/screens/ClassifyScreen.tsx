@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { invoke, useIpcEvent } from '../hooks/useIpc'
 import { Tag, CheckCircle, XCircle } from 'lucide-react'
+import type { ClassifyDoneEvent } from '../../main/ipc-types'
 
 interface ClassifyProgress {
   jobId: string
@@ -13,7 +14,7 @@ export function ClassifyScreen() {
   const [running, setRunning] = useState(false)
   const [jobId, setJobId] = useState<string | null>(null)
   const [progress, setProgress] = useState<ClassifyProgress | null>(null)
-  const [done, setDone] = useState(false)
+  const [done, setDone] = useState<ClassifyDoneEvent | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [resetFirst, setResetFirst] = useState(false)
   const [engine, setEngine] = useState('')
@@ -27,10 +28,10 @@ export function ClassifyScreen() {
   }, [jobId, running])
 
   useIpcEvent('classify:done', (p) => {
-    const data = p as { jobId: string }
+    const data = p as ClassifyDoneEvent
     if (data.jobId === jobId || (jobId === null && running)) {
       if (jobId === null) setJobId(data.jobId)
-      setDone(true); setRunning(false)
+      setDone(data); setRunning(false)
     }
   }, [jobId, running])
 
@@ -46,7 +47,7 @@ export function ClassifyScreen() {
     setRunning(true)
     setJobId(null)
     setProgress(null)
-    setDone(false)
+    setDone(null)
     setError(null)
     const result = await invoke<{ jobId: string }>('classify:llm:start', {
       engine: engine || undefined,
@@ -101,23 +102,43 @@ export function ClassifyScreen() {
         {running ? 'Classifying…' : 'Start classify'}
       </button>
 
-      {running && progress && (
+      {running && (
         <div className="p-4 rounded-lg bg-white/[0.04] border border-white/[0.06] space-y-2">
-          <p className="text-sm text-gray-400 capitalize">{progress.phase}: {progress.done} / {progress.total}</p>
+          <p className="text-sm text-gray-400 capitalize">
+            {progress
+              ? `${progress.phase}: ${progress.done} / ${progress.total}`
+              : 'Preparing classification job…'}
+          </p>
           <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
             <div
               className="h-full bg-lavender/60 rounded-full transition-all duration-300"
               style={{ width: `${pct}%` }}
             />
           </div>
-          <p className="text-xs text-gray-600">{pct}%</p>
+          <p className="text-xs text-gray-600">
+            {progress ? `${pct}%` : 'Waiting for first batch…'}
+          </p>
         </div>
       )}
 
       {done && (
         <div className="flex items-start gap-3 p-4 rounded-lg bg-mint/10 border border-mint/20">
           <CheckCircle size={18} className="text-mint mt-0.5 shrink-0" />
-          <p className="text-sm text-gray-200">Classification complete.</p>
+          <div className="text-sm">
+            <p className="text-gray-200">Classification complete.</p>
+            <p className="text-xs text-gray-400 mt-1">
+              Categories: {done.catResult.classified} classified
+              {done.catResult.failed > 0 ? ` · ${done.catResult.failed} failed` : ''}
+              {' · '}
+              {done.catResult.totalUnclassified} total
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              Domains: {done.domResult.classified} classified
+              {done.domResult.failed > 0 ? ` · ${done.domResult.failed} failed` : ''}
+              {' · '}
+              {done.domResult.totalUnclassified} total
+            </p>
+          </div>
         </div>
       )}
 

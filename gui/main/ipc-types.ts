@@ -32,6 +32,24 @@ export interface ClassifyProgressEvent {
   phase: 'categories' | 'domains'
 }
 
+export interface ClassifyDoneEvent {
+  jobId: string
+  catResult: {
+    engine: string
+    totalUnclassified: number
+    classified: number
+    failed: number
+    batches: number
+  }
+  domResult: {
+    engine: string
+    totalUnclassified: number
+    classified: number
+    failed: number
+    batches: number
+  }
+}
+
 export interface DeleteProgressEvent {
   jobId: string
   done: number

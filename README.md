@@ -2,7 +2,7 @@
 
 Self-custody for your X/Twitter bookmarks. Sync, search, classify, and explore locally — as a desktop app or a CLI.
 
-**v2.1.6** | [github.com/k0d3d/ft-gui](https://github.com/k0d3d/ft-gui) | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1) | MIT License | Linux · macOS · Windows
+**v2.1.8** | [github.com/k0d3d/ft-gui](https://github.com/k0d3d/ft-gui) | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1) | MIT License | Linux · macOS · Windows
 
 ---
 
@@ -14,9 +14,11 @@ Download the latest release for your platform:
 
 | Platform | Format |
 |----------|--------|
-| Linux | `.AppImage` (portable) or `.deb` |
+| Linux | `.deb` (recommended) or `.AppImage` (portable fallback) |
 | macOS | `.dmg` |
 | Windows | `.exe` (NSIS installer) |
+
+On Linux, prefer the `.deb` build when you want the most consistent startup behavior. The `AppImage` remains useful as a portable option, but can behave differently across systems and integration layers.
 
 Or build from source:
 

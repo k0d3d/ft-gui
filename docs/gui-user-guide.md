@@ -1,6 +1,6 @@
 # FT GUI — User Guide
 
-**FT GUI v2.1.6** | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by @afar1
+**FT GUI v2.1.8** | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by @afar1
 
 ---
 
@@ -22,6 +22,8 @@ pnpm gui:pack:all      # Linux + macOS + Windows
 ```
 
 The app reads and writes the same data as the CLI — `~/.fieldtheory/bookmarks/`. No migration needed.
+
+On Linux, prefer the `.deb` package for the most consistent launch behavior. The `AppImage` is still available as a portable fallback, but startup can vary more depending on the host system and AppImage integration tooling.
 
 ---
 
@@ -77,6 +79,7 @@ Runs LLM classification on bookmarks without a category or domain.
 - **Reset all classifications first** — clears all categories and domains before running, giving a clean re-classify from scratch.
 
 Progress shows two phases: **categories** (tool, research, technique, etc.) then **domains** (ai, finance, devops, etc.).
+The screen now shows immediate job feedback, live `done / total` progress, and final classified/failed counts for both phases.
 
 ### Categories / Domains / Folders
 

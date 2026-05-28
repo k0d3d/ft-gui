@@ -205,6 +205,8 @@ export async function classifyWithLlm(
       batches.push(unclassified.slice(i, i + BATCH_SIZE));
     }
 
+    options.onBatch?.(0, totalUnclassified);
+
     const totalBatches = batches.length;
     const concurrency = engine.config.type === 'api' ? 5 : 2;
     let nextBatchIdx = 0;
@@ -344,6 +346,8 @@ export async function classifyDomainsWithLlm(
     for (let i = 0; i < bookmarks.length; i += BATCH_SIZE) {
       batches.push(bookmarks.slice(i, i + BATCH_SIZE));
     }
+
+    options.onBatch?.(0, total);
 
     const totalBatches = batches.length;
     const concurrency = engine.config.type === 'api' ? 5 : 2;

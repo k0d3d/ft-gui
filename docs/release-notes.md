@@ -2,6 +2,26 @@
 
 ---
 
+## v2.1.8 — Classify Progress Feedback
+
+**Released:** 2026-05-28
+
+This patch fixes a weak spot in the classify workflow: the GUI now shows useful feedback while classification is running and a concrete summary when it finishes.
+
+### What changed
+
+- **Classify now shows immediate progress state** instead of leaving the screen stuck with only a disabled button until the first batch completes.
+- **Live classify progress** continues to show `done / total` for the active phase.
+- **Completion summaries** now include classified and failed counts for both the categories phase and the domains phase.
+- **Docs/version drift fixed** so the README and GUI user guide match the current release line again.
+
+### Verification
+
+- `npx tsc -p tsconfig.gui.json --noEmit`
+- `npx tsc -p tsconfig.json --noEmit`
+
+---
+
 ## v2.1.6 — OpenAI Settings, Sticky Screens, Startup Timing
 
 **Released:** 2026-05-28
@@ -14,6 +34,7 @@ This patch adds persisted OpenAI GUI settings, keeps screen state alive across n
 - **Screen state is preserved across navigation** for visited base screens, so in-progress operations no longer visually reset just because you switch to another tab and come back.
 - **Startup profiling** now records timing marks in the main process, shows them in **Settings → Performance**, and supports verbose startup timing logs with `FT_GUI_PROFILE_STARTUP=1`.
 - **Startup health work is deferred slightly** so expensive background checks are less likely to block the first visible window paint.
+- **Linux install guidance** now recommends the `.deb` build first when startup consistency matters, with `AppImage` kept as the portable fallback.
 
 ### Verification
 
