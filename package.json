@@ -18,8 +18,8 @@
     "gui:build": "electron-vite build",
     "gui:preview": "electron-vite preview",
     "gui:start": "electron . --no-sandbox",
-    "gui:pack": "pnpm gui:build && electron-builder --linux",
-    "gui:pack:all": "pnpm gui:build && electron-builder --linux --mac --win"
+    "gui:pack": "pnpm gui:build && electron-builder --linux && node build/patch-appimage.mjs",
+    "gui:pack:all": "pnpm gui:build && electron-builder --linux --mac --win && node build/patch-appimage.mjs"
   },
   "files": [
     "bin/",
