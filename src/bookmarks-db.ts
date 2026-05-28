@@ -1,8 +1,10 @@
 import type { Database } from 'sql.js';
+import fs from 'node:fs';
+import path from 'node:path';
 import { openDb, saveDb } from './db.js';
 import { parseTimestampMs, toIsoDate } from './date-utils.js';
 import { readJsonLines } from './fs.js';
-import { twitterBookmarksCachePath, twitterBookmarksIndexPath } from './paths.js';
+import { twitterBookmarksCachePath, twitterBookmarksIndexPath, dataDir } from './paths.js';
 import type { BookmarkRecord, QuotedTweetSnapshot } from './types.js';
 import { classifyCorpus, formatClassificationSummary } from './bookmark-classify.js';
 import type { ClassificationSummary } from './bookmark-classify.js';
@@ -1274,4 +1276,83 @@ export async function getAllTweetIds(): Promise<string[]> {
   } finally {
     db.close();
   }
+}
+
+export interface SnapshotResult {
+  snapshotPath: string;
+  jsonlPath: string;
+  recordCount: number;
+  sizeBytes: number;
+  timestamp: string;
+}
+
+export async function snapshotBookmarks(label?: string): Promise<SnapshotResult> {
+  const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const tag = label ? `_${label.replace(/[^a-z0-9]/gi, '_').slice(0, 32)}` : '';
+  const snapshotName = `snapshot_${ts}${tag}`;
+  const snapshotDir = path.join(dataDir(), 'snapshots', snapshotName);
+
+  fs.mkdirSync(snapshotDir, { recursive: true });
+
+  // 1. Copy JSONL (source of truth)
+  const srcJsonl = twitterBookmarksCachePath();
+  const dstJsonl = path.join(snapshotDir, 'bookmarks.jsonl');
+  fs.copyFileSync(srcJsonl, dstJsonl);
+
+  // 2. SQL dump of the DB (schema + data as INSERT statements)
+  const dbPath = twitterBookmarksIndexPath();
+  const db = await openDb(dbPath);
+  const sqlLines: string[] = [];
+  try {
+    // Schema
+    const schemaTables = db.exec(
+      `SELECT sql FROM sqlite_master WHERE sql IS NOT NULL ORDER BY type DESC, name`
+    );
+    for (const row of schemaTables[0]?.values ?? []) {
+      sqlLines.push(`${row[0] as string};`);
+    }
+    sqlLines.push('');
+
+    // Data — bookmarks table (excludes FTS virtual table, which rebuilds from content)
+    const rows = db.exec('SELECT * FROM bookmarks');
+    if (rows.length && rows[0].values.length) {
+      const cols = rows[0].columns.map((c) => `"${c}"`).join(', ');
+      sqlLines.push('BEGIN TRANSACTION;');
+      for (const row of rows[0].values) {
+        const vals = row
+          .map((v) =>
+            v === null ? 'NULL' : typeof v === 'number' ? String(v) : `'${String(v).replace(/'/g, "''")}'`
+          )
+          .join(', ');
+        sqlLines.push(`INSERT INTO bookmarks (${cols}) VALUES (${vals});`);
+      }
+      sqlLines.push('COMMIT;');
+    }
+  } finally {
+    db.close();
+  }
+
+  const sqlPath = path.join(snapshotDir, 'bookmarks.sql');
+  fs.writeFileSync(sqlPath, sqlLines.join('\n'), 'utf8');
+
+  // 3. Manifest
+  const recordCount = sqlLines.filter((l) => l.startsWith('INSERT')).length;
+  const manifest = {
+    timestamp: new Date().toISOString(),
+    label: label ?? null,
+    recordCount,
+    files: ['bookmarks.jsonl', 'bookmarks.sql'],
+  };
+  fs.writeFileSync(path.join(snapshotDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
+
+  const sizeBytes =
+    fs.statSync(dstJsonl).size + fs.statSync(sqlPath).size;
+
+  return {
+    snapshotPath: snapshotDir,
+    jsonlPath: dstJsonl,
+    recordCount,
+    sizeBytes,
+    timestamp: manifest.timestamp,
+  };
 }

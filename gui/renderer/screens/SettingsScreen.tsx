@@ -1,12 +1,24 @@
 import React, { useEffect, useState } from 'react'
 import { invoke, useIpcEvent } from '../hooks/useIpc'
-import { CheckCircle, Trash2, AlertTriangle } from 'lucide-react'
+import { CheckCircle, Trash2, AlertTriangle, Camera } from 'lucide-react'
+
+interface SnapshotResult {
+  snapshotPath: string
+  recordCount: number
+  sizeBytes: number
+  timestamp: string
+}
 
 export function SettingsScreen() {
   const [dataPath, setDataPath] = useState('')
   const [total, setTotal] = useState<number | null>(null)
   const [indexing, setIndexing] = useState(false)
   const [indexMsg, setIndexMsg] = useState('')
+
+  // Snapshot state
+  const [snapshotLabel, setSnapshotLabel] = useState('')
+  const [snapshotting, setSnapshotting] = useState(false)
+  const [snapshotResult, setSnapshotResult] = useState<SnapshotResult | null>(null)
 
   // Remove-all state
   const [confirmed, setConfirmed] = useState(false)
@@ -104,6 +116,51 @@ export function SettingsScreen() {
         {indexMsg && (
           <div className="flex items-center gap-2 mt-3 text-xs text-mint">
             <CheckCircle size={12} /> {indexMsg}
+          </div>
+        )}
+      </Section>
+
+      {/* Snapshot */}
+      <Section title="Snapshot">
+        <p className="text-sm text-gray-500 mb-4">
+          Save a point-in-time backup of your library — JSONL (source of truth) + SQL dump
+          with all classifications. Snapshots land in <code className="text-gray-400">~/.fieldtheory/bookmarks/snapshots/</code>.
+        </p>
+        <div className="flex gap-2 mb-4">
+          <input
+            value={snapshotLabel}
+            onChange={(e) => setSnapshotLabel(e.target.value)}
+            placeholder="optional label (e.g. before-delete)"
+            disabled={snapshotting}
+            className="flex-1 px-3 py-2 rounded-lg bg-white/[0.05] border border-white/[0.08] text-sm text-gray-300 placeholder:text-gray-600 focus:outline-none focus:border-lavender/40 transition"
+          />
+          <button
+            onClick={async () => {
+              setSnapshotting(true)
+              setSnapshotResult(null)
+              try {
+                const r = await invoke<SnapshotResult>('bookmarks:snapshot', snapshotLabel || undefined)
+                setSnapshotResult(r)
+              } finally {
+                setSnapshotting(false)
+              }
+            }}
+            disabled={snapshotting}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-lavender/20 text-lavender text-sm hover:bg-lavender/30 disabled:opacity-40 transition-colors"
+          >
+            <Camera size={14} />
+            {snapshotting ? 'Saving…' : 'Take snapshot'}
+          </button>
+        </div>
+        {snapshotResult && (
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-mint/10 border border-mint/20">
+            <CheckCircle size={14} className="text-mint mt-0.5 shrink-0" />
+            <div className="text-xs">
+              <p className="text-gray-200 mb-0.5">
+                {snapshotResult.recordCount.toLocaleString()} bookmarks · {(snapshotResult.sizeBytes / 1024).toFixed(0)} KB
+              </p>
+              <p className="text-gray-500 font-mono break-all">{snapshotResult.snapshotPath}</p>
+            </div>
           </div>
         )}
       </Section>

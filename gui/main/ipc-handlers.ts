@@ -11,6 +11,7 @@ import {
   classifyAndRebuild,
   buildIndex,
   getAllTweetIds,
+  snapshotBookmarks,
 } from '../../src/bookmarks-db.js'
 import { getBookmarkStatusView } from '../../src/bookmarks-service.js'
 import { dataDir } from '../../src/paths.js'
@@ -51,6 +52,8 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   })
 
   ipcMain.handle('bookmarks:allTweetIds', () => getAllTweetIds())
+
+  ipcMain.handle('bookmarks:snapshot', (_e, label?: string) => snapshotBookmarks(label))
 
   ipcMain.handle('bookmarks:bulkDeleteFromX', async (_e, tweetIds: string[]) => {
     const { deleteXBookmarks } = await import('../../src/bookmark-delete.js')
