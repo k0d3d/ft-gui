@@ -10,6 +10,7 @@ import {
   getFolderCounts,
   classifyAndRebuild,
   buildIndex,
+  getAllTweetIds,
 } from '../../src/bookmarks-db.js'
 import { getBookmarkStatusView } from '../../src/bookmarks-service.js'
 import { dataDir } from '../../src/paths.js'
@@ -48,6 +49,8 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     const { resetClassification } = await import('../../src/bookmarks-db.js')
     return resetClassification(ids)
   })
+
+  ipcMain.handle('bookmarks:allTweetIds', () => getAllTweetIds())
 
   ipcMain.handle('bookmarks:bulkDeleteFromX', async (_e, tweetIds: string[]) => {
     const { deleteXBookmarks } = await import('../../src/bookmark-delete.js')

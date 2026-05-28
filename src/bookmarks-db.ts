@@ -1264,3 +1264,14 @@ export async function resetClassification(ids: string[]): Promise<{ count: numbe
     db.close();
   }
 }
+
+export async function getAllTweetIds(): Promise<string[]> {
+  const dbPath = twitterBookmarksIndexPath();
+  const db = await openDb(dbPath);
+  try {
+    const rows = db.exec('SELECT tweet_id FROM bookmarks ORDER BY bookmarked_at DESC');
+    return (rows[0]?.values ?? []).map((r) => r[0] as string);
+  } finally {
+    db.close();
+  }
+}
