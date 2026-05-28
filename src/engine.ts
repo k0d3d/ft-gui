@@ -52,8 +52,7 @@ const KNOWN_ENGINES: Record<string, EngineConfig> = {
   openai: {
     type: 'api',
     invoke: async (prompt, engine) => {
-      const apiKey = process.env.OPENAI_API_KEY?.trim();
-      const baseUrl = (process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').trim();
+      const { apiKey, baseUrl } = getOpenAiConfig();
       const model = engine?.model || 'gpt-4o';
 
       if (!apiKey) {
@@ -85,6 +84,13 @@ const KNOWN_ENGINES: Record<string, EngineConfig> = {
     },
   },
 };
+
+export function getOpenAiConfig(): { apiKey?: string; baseUrl: string } {
+  const prefs = loadPreferences();
+  const apiKey = prefs.openaiApiKey?.trim() || process.env.OPENAI_API_KEY?.trim();
+  const baseUrl = (prefs.openaiBaseUrl?.trim() || process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').trim();
+  return { apiKey, baseUrl };
+}
 
 /** Order used when auto-detecting. */
 const PREFERENCE_ORDER = ['claude', 'codex', 'openai'];
@@ -129,9 +135,7 @@ export function detectAvailableEngines(): string[] {
   return PREFERENCE_ORDER.filter((name) => {
     const config = KNOWN_ENGINES[name];
     if (config.type === 'cli') return hasCommandOnPath(config.bin);
-    // API engines are considered available if they are in the registry.
-    // We check for the API key during invocation to give better error messages.
-    return true;
+    return Boolean(getOpenAiConfig().apiKey);
   });
 }
 

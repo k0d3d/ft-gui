@@ -13,6 +13,7 @@ import { FoldersScreen } from './screens/FoldersScreen'
 import { MediaScreen } from './screens/MediaScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { BookmarkDetailScreen } from './screens/BookmarkDetailScreen'
+import { nextMountedScreenNames, type BaseScreenName } from './screen-cache'
 
 export type Screen =
   | 'dashboard'
@@ -31,6 +32,7 @@ export type Screen =
 
 export function App() {
   const [screen, setScreen] = useState<Screen>('dashboard')
+  const [mountedScreens, setMountedScreens] = useState<BaseScreenName[]>(['dashboard'])
   const [updateVersion, setUpdateVersion] = useState<string | null>(null)
   const [healthWarning, setHealthWarning] = useState<string | null>(null)
 
@@ -57,15 +59,13 @@ export function App() {
 
   function nav(s: Screen) {
     setScreen(s)
+    setMountedScreens((current) => nextMountedScreenNames(current, s))
   }
 
   const currentName = typeof screen === 'string' ? screen : screen.name
 
-  function renderScreen() {
-    if (typeof screen === 'object' && screen.name === 'detail') {
-      return <BookmarkDetailScreen id={screen.id} onBack={() => setScreen('list')} />
-    }
-    switch (screen) {
+  function renderBaseScreen(name: BaseScreenName) {
+    switch (name) {
       case 'dashboard':   return <DashboardScreen onNav={nav} />
       case 'list':        return <ListScreen onNav={nav} />
       case 'search':      return <SearchScreen onNav={nav} />
@@ -78,7 +78,6 @@ export function App() {
       case 'folders':     return <FoldersScreen />
       case 'media':       return <MediaScreen />
       case 'settings':    return <SettingsScreen />
-      default:            return <DashboardScreen onNav={nav} />
     }
   }
 
@@ -103,7 +102,14 @@ export function App() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar current={currentName} onNav={(s) => nav(s as Screen)} />
         <main className="flex-1 overflow-y-auto">
-          {renderScreen()}
+          {mountedScreens.map((name) => (
+            <div key={name} className={currentName === name ? 'block h-full' : 'hidden h-full'}>
+              {renderBaseScreen(name)}
+            </div>
+          ))}
+          {typeof screen === 'object' && screen.name === 'detail' && (
+            <BookmarkDetailScreen id={screen.id} onBack={() => setScreen('list')} />
+          )}
         </main>
       </div>
     </div>

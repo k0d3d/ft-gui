@@ -17,8 +17,10 @@ test('preferences: round-trip save and load', async () => {
     assert.deepEqual(loadPreferences(), {});
 
     // Save and reload
-    savePreferences({ defaultEngine: 'claude' });
+    savePreferences({ defaultEngine: 'claude', openaiBaseUrl: 'https://example.invalid/v1', openaiApiKey: 'sk-test' });
     assert.equal(loadPreferences().defaultEngine, 'claude');
+    assert.equal(loadPreferences().openaiBaseUrl, 'https://example.invalid/v1');
+    assert.equal(loadPreferences().openaiApiKey, 'sk-test');
 
     // Overwrite
     savePreferences({ defaultEngine: 'codex' });
@@ -74,7 +76,7 @@ test('detectAvailableEngines: returns array of available engines', async () => {
 
   // Each entry should be a known engine name
   for (const name of available) {
-    assert.ok(['claude', 'codex'].includes(name), `unexpected engine: ${name}`);
+    assert.ok(['claude', 'codex', 'openai'].includes(name), `unexpected engine: ${name}`);
   }
 });
 
@@ -170,6 +172,38 @@ test('resolveEngine: carries explicit model and effort into engine args', async 
     }
   } finally {
     process.env.FT_DATA_DIR = origEnv;
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+test('openai config prefers saved preferences over environment variables', async () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ft-openai-prefs-'));
+  const origDataDir = process.env.FT_DATA_DIR;
+  const origApiKey = process.env.OPENAI_API_KEY;
+  const origBaseUrl = process.env.OPENAI_BASE_URL;
+  process.env.FT_DATA_DIR = tmpDir;
+  process.env.OPENAI_API_KEY = 'env-key';
+  process.env.OPENAI_BASE_URL = 'https://env.example/v1';
+
+  try {
+    const { savePreferences } = await import('../src/preferences.js');
+    const { getOpenAiConfig } = await import('../src/engine.js');
+
+    savePreferences({
+      openaiApiKey: 'pref-key',
+      openaiBaseUrl: 'https://prefs.example/v1',
+    });
+
+    assert.deepEqual(getOpenAiConfig(), {
+      apiKey: 'pref-key',
+      baseUrl: 'https://prefs.example/v1',
+    });
+  } finally {
+    process.env.FT_DATA_DIR = origDataDir;
+    if (origApiKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = origApiKey;
+    if (origBaseUrl === undefined) delete process.env.OPENAI_BASE_URL;
+    else process.env.OPENAI_BASE_URL = origBaseUrl;
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 });

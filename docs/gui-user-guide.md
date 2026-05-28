@@ -1,6 +1,6 @@
 # FT GUI — User Guide
 
-**FT GUI v2.1.5** | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by @afar1
+**FT GUI v2.1.6** | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by @afar1
 
 ---
 
@@ -113,11 +113,15 @@ Downloads images and video poster frames for bookmarks. Set an optional limit to
 ### Settings
 
 - **Data location** — shows the path to `~/.fieldtheory/bookmarks/` and your total bookmark count
+- **OpenAI** — save an OpenAI-compatible base URL and API key for GUI classification runs; reused automatically on later runs
 - **Rebuild index** — rebuilds the SQLite search index from the JSONL cache (preserves classification)
 - **Force rebuild** — drops all tables first (clears classification) then rebuilds from JSONL. Only use if the index is corrupted.
 - **Snapshot** — save a JSONL + SQL dump of the current library to `~/.fieldtheory/bookmarks/snapshots/`
 - **Load snapshot** — browse saved snapshots and restore to any of them; inline confirmation before overwrite
 - **Remove all bookmarks from X** — bulk un-bookmark your entire local library from X; checkbox confirmation required; your local library is unchanged
+- **Performance** — inspect startup timing marks and get profiling instructions for slow launch / renderer freezes
+
+The app keeps visited base screens mounted after first load, so returning to a screen preserves its local UI state instead of rebuilding it from scratch.
 
 ---
 
@@ -197,6 +201,9 @@ Open `x.com` in Chrome, Firefox, Brave, or Edge, make sure you're logged in, the
 
 **Delete from X fails for all items**  
 The `DeleteBookmark` query ID in `src/bookmark-delete.ts` may have been rotated by X. To find the current ID: open X in your browser, open DevTools → Network, perform any bookmark action, filter for `DeleteBookmark`, and read the `queryId` from the request payload. Update `DELETE_BOOKMARK_QUERY_ID` in `src/bookmark-delete.ts` and rebuild.
+
+**The app starts slowly or freezes on launch**
+Open **Settings → Performance** to inspect captured startup timings. For deeper analysis in development, launch with `FT_GUI_PROFILE_STARTUP=1 pnpm gui:dev`, then use DevTools → Performance to record while reproducing the freeze.
 
 **Search returns no results after a sync**  
 The FTS index may be stale. Go to Settings → Rebuild index.

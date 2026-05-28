@@ -56,6 +56,16 @@ export interface MediaProgressEvent {
   bytes: number
 }
 
+export interface OpenAiSettingsView {
+  baseUrl: string
+  hasApiKey: boolean
+}
+
+export interface StartupMetric {
+  name: string
+  ms: number
+}
+
 // ── Sync options (GUI subset) ──────────────────────────────────────────────
 
 export interface SyncGuiOptions {
@@ -102,6 +112,9 @@ export interface IpcChannels {
     result: { recordCount: number; summary: Record<string, number> },
   ]
   'paths:data': [filters: undefined, result: string]
+  'preferences:getOpenAi': [filters: undefined, result: OpenAiSettingsView]
+  'preferences:saveOpenAi': [opts: { baseUrl?: string; apiKey?: string; clearApiKey?: boolean }, result: OpenAiSettingsView]
+  'app:performance:get': [filters: undefined, result: { startup: StartupMetric[] }]
   'sync:start': [opts: SyncGuiOptions, result: { jobId: string }]
   'classify:llm:start': [opts: ClassifyGuiOptions, result: { jobId: string }]
   'media:fetch:start': [opts: { limit?: number }, result: { jobId: string }]

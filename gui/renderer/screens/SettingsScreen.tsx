@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { invoke, useIpcEvent } from '../hooks/useIpc'
 import { CheckCircle, Trash2, AlertTriangle, Camera, RotateCcw, RefreshCw, Activity, Zap } from 'lucide-react'
+import type { OpenAiSettingsView, StartupMetric } from '../../main/ipc-types'
 
 interface SnapshotResult {
   snapshotPath: string
@@ -21,6 +22,12 @@ export function SettingsScreen() {
   const [total, setTotal] = useState<number | null>(null)
   const [indexing, setIndexing] = useState(false)
   const [indexMsg, setIndexMsg] = useState('')
+  const [openAi, setOpenAi] = useState<OpenAiSettingsView | null>(null)
+  const [openAiBaseUrl, setOpenAiBaseUrl] = useState('https://api.openai.com/v1')
+  const [openAiApiKey, setOpenAiApiKey] = useState('')
+  const [openAiSaving, setOpenAiSaving] = useState(false)
+  const [openAiMsg, setOpenAiMsg] = useState<string | null>(null)
+  const [startupMetrics, setStartupMetrics] = useState<StartupMetric[]>([])
 
   // Diagnostics state
   type CheckStatus = 'ok' | 'warn' | 'error' | 'skip'
@@ -97,6 +104,13 @@ export function SettingsScreen() {
   useEffect(() => {
     invoke<string>('paths:data').then(setDataPath)
     invoke<number>('bookmarks:count', {}).then(setTotal)
+    invoke<OpenAiSettingsView>('preferences:getOpenAi').then((prefs) => {
+      setOpenAi(prefs)
+      setOpenAiBaseUrl(prefs.baseUrl)
+    })
+    invoke<{ startup: StartupMetric[] }>('app:performance:get').then((report) => {
+      setStartupMetrics(report.startup)
+    })
   }, [])
 
   useIpcEvent('delete:progress', (p) => {
@@ -161,6 +175,26 @@ export function SettingsScreen() {
     ? Math.round((removeProgress.done / removeProgress.total) * 100)
     : 0
 
+  async function saveOpenAiSettings(clearApiKey = false) {
+    setOpenAiSaving(true)
+    setOpenAiMsg(null)
+    try {
+      const saved = await invoke<OpenAiSettingsView>('preferences:saveOpenAi', {
+        baseUrl: openAiBaseUrl,
+        apiKey: clearApiKey ? undefined : openAiApiKey,
+        clearApiKey,
+      })
+      setOpenAi(saved)
+      setOpenAiApiKey('')
+      setOpenAiBaseUrl(saved.baseUrl)
+      setOpenAiMsg(clearApiKey ? 'Saved — API key removed.' : 'Saved — OpenAI settings will be reused automatically.')
+    } catch (e: unknown) {
+      setOpenAiMsg((e as Error).message)
+    } finally {
+      setOpenAiSaving(false)
+    }
+  }
+
   return (
     <div className="p-8 max-w-2xl">
       <h1 className="text-lg font-semibold text-gray-200 mb-8">Settings</h1>
@@ -171,6 +205,58 @@ export function SettingsScreen() {
         {total !== null && (
           <p className="text-xs text-gray-600 mt-1">{total.toLocaleString()} bookmarks in local library</p>
         )}
+      </Section>
+
+      <Section title="OpenAI">
+        <p className="text-sm text-gray-500 mb-4">
+          Persist an OpenAI-compatible base URL and API key for GUI classification runs. Saved locally in
+          <code className="text-gray-400 ml-1">.preferences</code> with private file permissions.
+        </p>
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Base URL</label>
+            <input
+              value={openAiBaseUrl}
+              onChange={(e) => setOpenAiBaseUrl(e.target.value)}
+              disabled={openAiSaving}
+              placeholder="https://api.openai.com/v1"
+              className="w-full px-3 py-2 rounded-lg bg-white/[0.05] border border-white/[0.08] text-sm text-gray-300 placeholder:text-gray-600 focus:outline-none focus:border-lavender/40 transition"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">API key</label>
+            <input
+              type="password"
+              value={openAiApiKey}
+              onChange={(e) => setOpenAiApiKey(e.target.value)}
+              disabled={openAiSaving}
+              placeholder={openAi?.hasApiKey ? 'Saved key present — enter a new one to replace it' : 'sk-...'}
+              className="w-full px-3 py-2 rounded-lg bg-white/[0.05] border border-white/[0.08] text-sm text-gray-300 placeholder:text-gray-600 focus:outline-none focus:border-lavender/40 transition"
+            />
+            {openAi?.hasApiKey && (
+              <p className="text-xs text-gray-600 mt-1">A saved API key is already present.</p>
+            )}
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => saveOpenAiSettings(false)}
+              disabled={openAiSaving}
+              className="px-4 py-2 rounded text-sm bg-lavender/20 text-lavender hover:bg-lavender/30 disabled:opacity-40 transition-colors"
+            >
+              {openAiSaving ? 'Saving…' : 'Save OpenAI settings'}
+            </button>
+            <button
+              onClick={() => saveOpenAiSettings(true)}
+              disabled={openAiSaving || !openAi?.hasApiKey}
+              className="px-4 py-2 rounded text-sm bg-white/[0.06] text-gray-300 hover:bg-white/[0.1] disabled:opacity-30 transition-colors"
+            >
+              Remove saved API key
+            </button>
+          </div>
+          {openAiMsg && (
+            <p className={`text-xs ${openAiMsg.startsWith('Saved') ? 'text-mint' : 'text-coral'}`}>{openAiMsg}</p>
+          )}
+        </div>
       </Section>
 
       {/* Search index */}
@@ -516,6 +602,28 @@ export function SettingsScreen() {
             </p>
           </div>
         )}
+      </Section>
+
+      <Section title="Performance">
+        <p className="text-sm text-gray-500 mb-4">
+          Startup timings help explain slow launch and freezes. For deeper renderer profiling, open DevTools and record a Performance trace while reproducing the stall.
+        </p>
+        {startupMetrics.length > 0 ? (
+          <div className="space-y-2 mb-4">
+            {startupMetrics.map((metric) => (
+              <div key={metric.name} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <span className="text-xs text-gray-400">{metric.name}</span>
+                <span className="text-xs text-gray-300 font-mono">{metric.ms.toFixed(1)} ms</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-gray-600 mb-4">No startup timings captured yet.</p>
+        )}
+        <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06] text-xs text-gray-500 space-y-1">
+          <p>For detailed startup logging, launch with <code className="text-gray-300">FT_GUI_PROFILE_STARTUP=1 pnpm gui:dev</code>.</p>
+          <p>For freeze analysis, use DevTools → Performance in development builds and record while reproducing the stall.</p>
+        </div>
       </Section>
     </div>
   )

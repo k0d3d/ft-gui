@@ -2,6 +2,28 @@
 
 ---
 
+## v2.1.6 — OpenAI Settings, Sticky Screens, Startup Timing
+
+**Released:** 2026-05-28
+
+This patch adds persisted OpenAI GUI settings, keeps screen state alive across navigation, and exposes startup timing data to help debug slow launch and freezes.
+
+### What changed
+
+- **Settings → OpenAI** now stores an OpenAI-compatible base URL and API key in the local preferences file, and GUI classification reuses those settings automatically.
+- **Screen state is preserved across navigation** for visited base screens, so in-progress operations no longer visually reset just because you switch to another tab and come back.
+- **Startup profiling** now records timing marks in the main process, shows them in **Settings → Performance**, and supports verbose startup timing logs with `FT_GUI_PROFILE_STARTUP=1`.
+- **Startup health work is deferred slightly** so expensive background checks are less likely to block the first visible window paint.
+
+### Verification
+
+- `node --import tsx --test tests/delete-job.test.ts tests/gui-screen-cache.test.ts`
+- `node --import tsx --test --test-name-pattern "preferences: round-trip save and load|detectAvailableEngines: returns array of available engines|openai config prefers saved preferences over environment variables" tests/engine.test.ts`
+- `npx tsc -p tsconfig.gui.json --noEmit`
+- `npx tsc -p tsconfig.json --noEmit`
+
+---
+
 ## v2.1.5 — GUI Delete Flow Hardening
 
 **Released:** 2026-05-28

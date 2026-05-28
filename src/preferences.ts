@@ -5,6 +5,8 @@ export interface Preferences {
   defaultEngine?: string;
   /** Overrides the hardcoded DeleteBookmark GraphQL queryId. Auto-set by health check. */
   deleteBookmarkQueryId?: string;
+  openaiBaseUrl?: string;
+  openaiApiKey?: string;
 }
 
 export function loadPreferences(): Preferences {

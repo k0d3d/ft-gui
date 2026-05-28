@@ -2,7 +2,7 @@
 
 Self-custody for your X/Twitter bookmarks. Sync, search, classify, and explore locally — as a desktop app or a CLI.
 
-**v2.1.5** | [github.com/k0d3d/ft-gui](https://github.com/k0d3d/ft-gui) | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1) | MIT License | Linux · macOS · Windows
+**v2.1.6** | [github.com/k0d3d/ft-gui](https://github.com/k0d3d/ft-gui) | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1) | MIT License | Linux · macOS · Windows
 
 ---
 
@@ -52,7 +52,15 @@ Requires Node.js 20+.
 | Categories / Domains / Folders | Distribution charts |
 | Bookmark detail | Full tweet, article, quoted tweet, engagement stats |
 | Media | Fetch and download images and video posters |
-| Settings | Index rebuild, data path |
+| Settings | OpenAI config, index rebuild, snapshots, performance timings |
+
+### New in v2.1.6
+
+**OpenAI settings in GUI** — Settings now lets you persist an OpenAI-compatible base URL and API key locally, so GUI classification runs can reuse them automatically without relying only on shell env vars.
+
+**Navigation-safe long jobs** — visited base screens stay mounted after first open, so leaving Settings, Sync, Classify, or Media no longer wipes in-progress UI state when you navigate away and return.
+
+**Startup profiling hooks** — Settings now exposes startup timing marks, and development builds can log them with `FT_GUI_PROFILE_STARTUP=1 pnpm gui:dev` to investigate slow launch or freezes.
 
 ### New in v2.0.0
 

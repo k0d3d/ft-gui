@@ -22,7 +22,9 @@ import { fetchBookmarkMediaBatch } from '../../src/bookmark-media.js'
 import { resolveEngine } from '../../src/engine.js'
 import { getVizData } from '../../src/bookmarks-viz.js'
 import { runHealthChecks, autoHealDeleteQueryId } from '../../src/health-check.js'
+import { loadPreferences, savePreferences } from '../../src/preferences.js'
 import { startDeleteBookmarksJob } from './delete-job.js'
+import { getStartupMetrics } from './performance.js'
 import type {
   BookmarkTimelineFilters,
   SearchOptions,
@@ -84,6 +86,39 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   ipcMain.handle('status:get', () => getBookmarkStatusView())
 
   ipcMain.handle('paths:data', () => dataDir())
+
+  ipcMain.handle('preferences:getOpenAi', () => {
+    const prefs = loadPreferences()
+    return {
+      baseUrl: prefs.openaiBaseUrl?.trim() || 'https://api.openai.com/v1',
+      hasApiKey: Boolean(prefs.openaiApiKey?.trim()),
+    }
+  })
+
+  ipcMain.handle('preferences:saveOpenAi', (_e, opts: { baseUrl?: string; apiKey?: string; clearApiKey?: boolean }) => {
+    const prefs = loadPreferences()
+    const next = { ...prefs }
+    const trimmedBaseUrl = opts.baseUrl?.trim()
+    const trimmedApiKey = opts.apiKey?.trim()
+
+    next.openaiBaseUrl = trimmedBaseUrl || 'https://api.openai.com/v1'
+    if (opts.clearApiKey) {
+      delete next.openaiApiKey
+    } else if (trimmedApiKey) {
+      next.openaiApiKey = trimmedApiKey
+    }
+
+    savePreferences(next)
+
+    return {
+      baseUrl: next.openaiBaseUrl,
+      hasApiKey: Boolean(next.openaiApiKey?.trim()),
+    }
+  })
+
+  ipcMain.handle('app:performance:get', () => ({
+    startup: getStartupMetrics(),
+  }))
 
   ipcMain.handle('index:build', (_e, opts: { force?: boolean }) => buildIndex(opts))
 

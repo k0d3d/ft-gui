@@ -23,7 +23,7 @@ import {
 } from './bookmarks-db.js';
 import { formatClassificationSummary } from './bookmark-classify.js';
 import { classifyWithLlm, classifyDomainsWithLlm } from './bookmark-classify-llm.js';
-import { resolveEngine, detectAvailableEngines } from './engine.js';
+import { resolveEngine, detectAvailableEngines, getOpenAiConfig } from './engine.js';
 import { loadPreferences, savePreferences } from './preferences.js';
 import { compileMd } from './md.js';
 import { cleanWikiFences } from './md-fence.js';
@@ -1396,7 +1396,7 @@ export function buildCli() {
         const marker = name === prefs.defaultEngine ? ' (default)' : '';
         let status = '';
         if (name === 'openai') {
-          status = process.env.OPENAI_API_KEY ? ' [configured]' : ' [missing API key]';
+          status = getOpenAiConfig().apiKey ? ' [configured]' : ' [missing API key]';
         }
         console.log(`    ${name}${marker}${status}`);
       }
