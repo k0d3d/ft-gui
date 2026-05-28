@@ -7,7 +7,7 @@ const CHROME_UA =
 
 // Refresh by searching for `operationName:"DeleteBookmark"` in X's main JS bundle
 // at abs.twimg.com/responsive-web/client-web/main.<hash>.js
-const DELETE_BOOKMARK_QUERY_ID = 'Wlmlj2-xzy44Y3-a2VzGig';
+const DELETE_BOOKMARK_QUERY_ID = 'Wlmlj2-xzyS1GN3a6cj-mQ';
 const DELETE_BOOKMARK_OPERATION = 'DeleteBookmark';
 
 const DELAY_MS = 250; // between requests to avoid rate-limiting
