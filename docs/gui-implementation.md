@@ -1,8 +1,9 @@
-# Field Theory GUI — Implementation Report
+# FT GUI — Implementation Report
 
 **Date:** 2026-05-28  
+**Version:** 2.0.0  
 **Branch:** master  
-**Base commit:** ffd0233
+**Base commit:** ffd0233 (fieldtheory-cli by @afar1)
 
 ---
 
@@ -10,69 +11,79 @@
 
 This report covers the addition of an Electron desktop GUI to the Field Theory CLI. The CLI remains fully intact and functional (`ft` command, `npm run build`, etc.). The GUI is a separate build target that shares the same data layer.
 
+The GUI is named **FT GUI**. It is built on top of [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1).
+
 ---
 
 ## What Was Built
 
-### New CLI commands
+### New npm scripts
 
-| Command | Description |
+| Script | Description |
 |---|---|
 | `pnpm gui:dev` | Dev mode with hot-reload (Vite dev server + Electron) |
 | `pnpm gui:build` | Production build → `dist-gui/` |
 | `pnpm gui:start` | Launch the built app |
+| `pnpm gui:pack` | Build + package for Linux (AppImage + deb) → `release/` |
+| `pnpm gui:pack:all` | Build + package for Linux, macOS, and Windows |
 
 ### New files
 
 #### Build & config
 | File | Purpose |
 |---|---|
-| `electron.vite.config.ts` | electron-vite build config (main, preload, renderer) |
-| `tsconfig.gui.json` | TypeScript config for `gui/` (bundler module resolution, JSX) |
-| `tailwind.config.js` | Tailwind CSS with Field Theory colour palette |
+| `electron.vite.config.ts` | electron-vite build config (main, preload, renderer); injects `__APP_VERSION__` into renderer |
+| `tsconfig.gui.json` | TypeScript config for `gui/` (bundler resolution, JSX) |
+| `tailwind.config.js` | Tailwind CSS with FT colour palette (lavender, periwinkle, mint, peach, coral, amber) |
 | `postcss.config.js` | PostCSS config for Tailwind |
+
+#### Icons and assets
+| File | Purpose |
+|---|---|
+| `assets/images/icon-1024.png` | Source icon (1024×1024 PNG) |
+| `assets/images/icon.svg` | SVG source |
+| `build/icons/` | Generated sizes: 16, 32, 48, 64, 128, 256, 512, 1024 px PNGs + `icon.ico` (multi-res Windows) |
 
 #### Electron main process (`gui/main/`)
 | File | Purpose |
 |---|---|
-| `main.ts` | BrowserWindow lifecycle, DevTools in dev mode |
-| `preload.ts` | contextBridge exposing `window.ftApi` (invoke / on / off) |
+| `main.ts` | BrowserWindow lifecycle, single-instance lock, auto-updater, DevTools in dev mode |
+| `preload.ts` | contextBridge exposing `window.ftApi` (invoke / on / off); built as CJS |
 | `ipc-types.ts` | Typed IPC channel surface shared by main and renderer |
-| `ipc-handlers.ts` | All `ipcMain.handle()` registrations; calls `src/` directly |
+| `ipc-handlers.ts` | All `ipcMain.handle()` registrations; imports `src/` directly |
 
 #### React renderer (`gui/renderer/`)
 | File | Purpose |
 |---|---|
 | `main.tsx` | React entry point |
-| `app.tsx` | Navigation state machine, screen routing |
-| `styles.css` | Tailwind base + scrollbar styles |
+| `app.tsx` | Navigation state machine, update-ready banner |
+| `styles.css` | Tailwind base + custom scrollbar |
 | `hooks/useIpc.ts` | `invoke<T>()` helper and `useIpcEvent()` hook |
-| `components/Sidebar.tsx` | Left-rail navigation with group labels |
+| `components/Sidebar.tsx` | Left-rail navigation; shows `v{__APP_VERSION__}` at bottom |
 | `screens/DashboardScreen.tsx` | Status metrics, quick-action buttons, category pills |
-| `screens/ListScreen.tsx` | Paginated bookmark list with multi-select |
-| `screens/SearchScreen.tsx` | Full-text search with results |
-| `screens/BookmarkDetailScreen.tsx` | Single bookmark: full text, quoted tweet, article, actions |
-| `screens/SyncScreen.tsx` | Sync trigger with live progress bar |
-| `screens/ClassifyScreen.tsx` | LLM classify with two-phase progress |
+| `screens/ListScreen.tsx` | Paginated bookmark list with multi-select, bulk delete, reset classification |
+| `screens/SearchScreen.tsx` | Full-text search with BM25 results |
+| `screens/BookmarkDetailScreen.tsx` | Full tweet, article, quoted tweet, engagement, single-bookmark actions |
+| `screens/SyncScreen.tsx` | Sync trigger with live progress; "Remove from X after sync" option |
+| `screens/ClassifyScreen.tsx` | LLM classify with two-phase progress; "Reset all first" option |
+| `screens/VizScreen.tsx` | 14-panel Recharts dashboard |
 | `screens/StatsScreen.tsx` | Author leaderboard, language breakdown |
-| `screens/VizScreen.tsx` | Recharts dashboard (14 panels) |
 | `screens/CategoriesScreen.tsx` | Category bar chart |
 | `screens/DomainsScreen.tsx` | Subject domain bar chart |
 | `screens/FoldersScreen.tsx` | X folder distribution |
 | `screens/MediaScreen.tsx` | Fetch media with progress |
-| `screens/SettingsScreen.tsx` | Data path display, index rebuild |
+| `screens/SettingsScreen.tsx` | Data path, index rebuild |
 
 #### New source files (`src/`)
 | File | Purpose |
 |---|---|
-| `bookmark-delete.ts` | Bulk `DeleteBookmark` GraphQL mutation via cookie auth |
+| `bookmark-delete.ts` | Bulk `DeleteBookmark` GraphQL mutation via browser-cookie auth |
 
 #### Modified source files (`src/`)
 | File | Change |
 |---|---|
 | `bookmarks-db.ts` | Added `resetClassification(ids)` export |
-| `bookmarks-viz.ts` | Exported `getVizData()` and `VizData`/`GemBookmark` types |
-| `package.json` | Added Electron + React deps; `pnpm.onlyBuiltDependencies`; `"main"` field |
+| `bookmarks-viz.ts` | Exported `getVizData()`, `VizData`, `GemBookmark` types |
 
 ---
 
@@ -101,7 +112,7 @@ This report covers the addition of an Electron desktop GUI to the Field Theory C
 
 ### IPC patterns
 
-**Request-reply** (used for data queries):
+**Request-reply** (data queries):
 ```ts
 // Renderer
 const items = await invoke<BookmarkTimelineItem[]>('bookmarks:list', filters)
@@ -110,29 +121,12 @@ const items = await invoke<BookmarkTimelineItem[]>('bookmarks:list', filters)
 ipcMain.handle('bookmarks:list', (_e, filters) => listBookmarks(filters))
 ```
 
-**Streaming progress** (used for long-running jobs):
+**Streaming progress** (long-running jobs):
 ```ts
-// Main — sends events while the job runs
+// Main — fires events during the job
 const jobId = crypto.randomUUID()
 syncBookmarksGraphQL({ onProgress: (p) => win.webContents.send('sync:progress', { ...p, jobId }) })
-return { jobId }
-
-// Renderer — subscribes in useEffect
-useIpcEvent('sync:progress', (p) => { if (p.jobId === jobId) setProgress(p) }, [jobId])
-```
-
-### Data flow (unchanged from CLI)
-
-```
-Chrome/Firefox cookies
-        ↓
-GraphQL API (X internal)
-        ↓
-JSONL cache (~/.fieldtheory/bookmarks/bookmarks.jsonl)   ← source of truth
-        ↓
-SQLite FTS5 index (bookmarks.db)   ← rebuilt from JSONL on demand
-        ↓
-IPC handlers → React screens
+return { jobId }  // renderer subscribes with useIpcEvent('sync:progress', handler, [jobId])
 ```
 
 ### Build outputs
@@ -140,21 +134,30 @@ IPC handlers → React screens
 | Target | Output dir | Format |
 |---|---|---|
 | CLI | `dist/` | ES2022 ESM (unchanged) |
-| Electron main | `dist-gui/main/` | ESM (Rollup) |
-| Electron preload | `dist-gui/preload/preload.js` | **CommonJS** (required by Electron) |
+| Electron main | `dist-gui/main/` | ESM |
+| Electron preload | `dist-gui/preload/preload.js` | **CJS** (Electron requirement) |
 | React renderer | `dist-gui/renderer/` | Bundled ESM + CSS |
 
-The preload is forced to CJS via `rollupOptions.output.format: 'cjs'` in `electron.vite.config.ts` — Electron does not support ESM preload scripts.
+The preload is forced to CJS via `rollupOptions.output.format: 'cjs'` — Electron does not support ESM preload scripts.
 
-### Key dependency decisions
+### Version injection
 
-| Package | Version | Reason |
-|---|---|---|
-| `electron` | ^33 | v34–36 load both GTK 3 and GTK 4 on Ubuntu 25.04, causing a fatal startup crash. v33 uses GTK 3 only. |
-| `electron-vite` | ^3 | Handles the three Electron build contexts with a single config and HMR |
-| `react` | ^18 | Stable LTS; `@types/react` v18 compatible |
-| `recharts` | ^2 | React-native, responsive containers, good TypeScript support |
-| `tailwindcss` | ^3 | v4 alpha not yet stable; v3 works with PostCSS |
+The app version is injected from `package.json` at build time via Vite's `define`:
+
+```ts
+// electron.vite.config.ts
+define: { __APP_VERSION__: JSON.stringify(version) }
+
+// Sidebar.tsx
+declare const __APP_VERSION__: string
+<span>v{__APP_VERSION__}</span>
+```
+
+No IPC call needed — baked in at build time.
+
+### Single-instance lock
+
+`app.requestSingleInstanceLock()` in `main.ts`. A second launch quits immediately and focuses the already-running window.
 
 ---
 
@@ -162,45 +165,88 @@ The preload is forced to CJS via `rollupOptions.output.format: 'cjs'` in `electr
 
 ### 1. Bulk delete from X
 
-Removes bookmarks from your X account (un-bookmarks them) while keeping them in your local library. Uses the same browser-cookie authentication as sync — no OAuth re-auth needed.
+Removes bookmarks from the X account while keeping the local copy. Uses the same browser-cookie auth as sync.
 
 **API:** `POST https://x.com/i/api/graphql/{DELETE_BOOKMARK_QUERY_ID}/DeleteBookmark`  
-**Auth:** CSRF token + cookie header from Chrome/Firefox session (via `detectValidSessions()`)  
+**Auth:** CSRF token + cookie header via `detectValidSessions()` — no OAuth needed  
 **Rate limiting:** 250 ms delay between requests  
+**Source:** `src/bookmark-delete.ts`
 
-> **Note:** `DELETE_BOOKMARK_QUERY_ID` in `src/bookmark-delete.ts` is `Wlmlj2-xzy44Y3-a2VzGig`. X rotates these IDs occasionally. If deletes stop working, intercept X network requests in browser DevTools and search for `operationName:"DeleteBookmark"` in the main JS bundle at `abs.twimg.com/responsive-web/client-web/main.<hash>.js`.
+> **Note on the query ID:** `DELETE_BOOKMARK_QUERY_ID` in `src/bookmark-delete.ts` is `Wlmlj2-xzy44Y3-a2VzGig`. X rotates these periodically. To find the current one, intercept X network requests in browser DevTools and search for `operationName:"DeleteBookmark"` in the main bundle at `abs.twimg.com/responsive-web/client-web/main.<hash>.js`.
 
-Available in two places:
-- **Browse screen** — multi-select bookmarks → "Remove from X" button
-- **Sync screen** — "Remove from X after sync" checkbox (removes newly synced items once stored locally)
+Available in:
+- Browse screen: multi-select → "Remove from X"
+- Sync screen: "Remove from X after sync" checkbox
 
 ### 2. Reset classification
 
-Clears `categories`, `primary_category`, `domains`, `primary_domain` columns in the SQLite DB for selected bookmarks (or all of them), setting `primary_category = 'unclassified'`. The next classify run picks them up fresh.
+Resets `primary_category = 'unclassified'` and clears `categories`, `primary_domain`, `domains` in the SQLite DB. Classification lives only in the DB; JSONL is not modified. The next classify run re-processes reset rows.
 
 **Function:** `resetClassification(ids: string[])` in `src/bookmarks-db.ts`  
 Passing an empty array resets all bookmarks.
 
-Available in two places:
-- **Browse screen** — multi-select → "Reset classification"
-- **Bookmark detail screen** — single-bookmark reset
-- **Classify screen** — "Reset all classifications first" checkbox before LLM run
+Available in:
+- Browse screen: multi-select → "Reset classification"
+- Bookmark detail: single-bookmark reset button
+- Classify screen: "Reset all classifications first" checkbox
 
 ---
 
-## Linux / Platform Notes
+## Packaging
 
-### Ubuntu 25.04 (GTK conflict)
+### electron-builder config (`package.json` → `"build"`)
 
-Electron v34+ loads both `libgtk-3.so.0` and `libgtk-4.so.1` on startup. Ubuntu 25.04 ships GTK 4.20 as default; the mixed load triggers a fatal `Gtk-ERROR: GTK 2/3 symbols detected`. Fixed by pinning to Electron v33.
+| Platform | Output |
+|---|---|
+| Linux | AppImage (x64) + deb (x64) |
+| macOS | dmg (x64, arm64) |
+| Windows | NSIS installer (x64) |
+
+**Publish target:** GitHub Releases (`afar1/fieldtheory-cli`)
+
+Icons: `build/icons/` — generated from `assets/images/icon-1024.png` using Pillow. All sizes from 16×16 to 1024×1024 PNG, plus multi-resolution `.ico` for Windows.
+
+macOS `.icns` needs to be generated before packaging on/for macOS:
+```bash
+# From the 1024px PNG, build an iconset and convert
+mkdir -p build/icons/icon.iconset
+for s in 16 32 64 128 256 512 1024; do
+  cp build/icons/${s}x${s}.png build/icons/icon.iconset/icon_${s}x${s}.png
+done
+iconutil -c icns build/icons/icon.iconset -o build/icons/icon.icns
+```
+
+### Auto-updater
+
+`electron-updater` checks GitHub Releases on startup (packaged builds only). Downloads silently; installs on quit. A dismissible update-ready banner appears in the renderer when a download completes.
+
+---
+
+## Key Dependency Decisions
+
+| Package | Version | Reason |
+|---|---|---|
+| `electron` | ^33 | v34–36 load both GTK 3 and GTK 4 on Ubuntu 25.04, causing a fatal startup crash. v33 uses GTK 3 only. |
+| `electron-vite` | ^3 | Handles the three Electron build contexts with a single config and HMR |
+| `react` | ^18 | Stable LTS |
+| `recharts` | ^2 | React-native, responsive containers |
+| `tailwindcss` | ^3 | v4 not yet stable with the PostCSS plugin chain used here |
+
+---
+
+## Linux Platform Notes
+
+### Ubuntu 25.04 — GTK conflict
+
+Electron v34+ links against both `libgtk-3.so.0` and `libgtk-4.so.1`. Ubuntu 25.04 ships GTK 4.20 as default; the mixed load triggers: `Gtk-ERROR: GTK 2/3 symbols detected`. Fixed by pinning to Electron v33.
 
 ### Sandbox
 
-Linux requires the `chrome-sandbox` binary to be owned by root with SUID (`chmod 4755`). For development, `--no-sandbox` is passed instead. This is set in `package.json`'s `gui:start` script.
+Linux requires the `chrome-sandbox` binary to be owned by root with SUID (`chmod 4755`). For development, `--no-sandbox` is passed instead. This is baked into the `gui:start` script. The AppImage handles sandbox setup automatically.
 
 ---
 
-## Screens Reference
+## Screens
 
 | Screen | Sidebar label | CLI equivalent |
 |---|---|---|
@@ -222,5 +268,5 @@ Linux requires the `chrome-sandbox` binary to be owned by root with SUID (`chmod
 
 | CLI command | Notes |
 |---|---|
-| `ft wiki` / `ft md` / `ft ask` / `ft lint` | WikiScreen — planned Phase 5 |
-| `ft possible` / `ft seeds` / `ft repos` / `ft frames` | PossibleScreen — planned Phase 5 |
+| `ft wiki` / `ft md` / `ft ask` / `ft lint` | WikiScreen — planned |
+| `ft possible` / `ft seeds` / `ft repos` / `ft frames` | PossibleScreen — planned |
