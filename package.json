@@ -1,6 +1,6 @@
 {
   "name": "fieldtheory",
-  "version": "1.3.20",
+  "version": "2.0.0",
   "description": "Field Theory CLI. Self-custody for your X/Twitter bookmarks. Local sync, full-text search, classification, and terminal dashboards.",
   "type": "module",
   "bin": {
@@ -34,7 +34,10 @@
     "url": "git+https://github.com/afar1/fieldtheory-cli.git"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["electron", "esbuild"]
+    "onlyBuiltDependencies": [
+      "electron",
+      "esbuild"
+    ]
   },
   "keywords": [
     "bookmarks",
