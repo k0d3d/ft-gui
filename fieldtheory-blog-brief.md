@@ -1,4 +1,4 @@
-# ✍️ Blog Writing Brief: fieldtheory-cli
+# ✍️ Blog Writing Brief: FT GUI — Field Theory v2.0.0
 
 > **For the writing AI agent.** Follow every section in order. Each section includes its purpose, the angle to take, keywords to weave in naturally, and specific talking points to cover. Do not invent technical details — only use what is provided in this brief. Write in a clear, practical, developer-friendly tone. Avoid fluff.
 
@@ -8,38 +8,52 @@
 
 | Field | Value |
 |---|---|
-| **Suggested Title** | How to Export and Manage Your Twitter Bookmarks Locally with fieldtheory-cli |
-| **Meta Description** | fieldtheory-cli is a free, open-source CLI tool that lets you download, search, classify, and organize all your Twitter/X bookmarks locally — no API key required. |
-| **Primary Keyword** | twitter bookmarks exporter |
-| **Secondary Keywords** | twitter bookmarks manager, export twitter bookmarks free, download twitter bookmarks, twitter bookmarks save and organize |
-| **FAQ Keywords (use as H2/H3 subheadings)** | Can you download your Twitter bookmarks? · Where are my saved bookmarks on Twitter? · How do I transfer all Twitter bookmarks? · How can I export all my bookmarks? |
-| **Target Audience** | Developers, power users, researchers, and anyone who uses X/Twitter bookmarks heavily and wants offline access or smarter organization |
-| **Tone** | Practical, honest, informative. First-person where appropriate (author troubleshot this tool themselves). |
-| **Word Count Target** | 1,800 – 2,400 words |
+| **Suggested Title** | FT GUI: Download, Organize, and Delete Your Twitter Bookmarks Locally — Now With a Desktop App |
+| **Meta Description** | FT GUI is a free, open-source desktop app (and CLI) that lets you download, search, classify, bulk-delete, and organize all your X/Twitter bookmarks locally — no API key required. Available as AppImage, deb, dmg, and exe. |
+| **Primary Keyword** | twitter bookmarks manager |
+| **Secondary Keywords** | twitter bookmarks exporter, export twitter bookmarks free, download twitter bookmarks, delete twitter bookmarks, twitter bookmarks desktop app |
+| **FAQ Keywords (use as H2/H3 subheadings)** | Can you download your Twitter bookmarks? · How do I delete all my Twitter bookmarks? · Where are my saved bookmarks on Twitter? · How do I export all my bookmarks? · Is there a desktop app for Twitter bookmarks? |
+| **Target Audience** | Developers, power users, researchers, and anyone who uses X/Twitter bookmarks heavily and wants offline access, smarter organization, or the ability to bulk-manage from a desktop UI |
+| **Tone** | Practical, honest, informative. First-person where appropriate. |
+| **Word Count Target** | 2,000 – 2,600 words |
+
+---
+
+## Background and Context (read before writing)
+
+This post covers **FT GUI v2.0.0** — a major upgrade to the original [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1). The CLI remains fully intact and unchanged. v2.0.0 adds a full **Electron desktop GUI** alongside the existing terminal commands.
+
+Key additions in v2.0.0:
+1. **Desktop app** (Electron) — all CLI commands become GUI screens. Available as AppImage, .deb, .dmg, .exe.
+2. **Bulk delete from X** — select multiple bookmarks, click "Remove from X." Removes them from your X account while keeping a local copy.
+3. **Reset classification** — clear and re-run LLM classification on any bookmarks.
+4. **Interactive Viz dashboard** — the `ft viz` terminal chart is now an interactive Recharts GUI with 14 panels.
+5. **Auto-updater** — checks GitHub Releases on startup and installs updates silently.
+
+The app is built on top of the original fieldtheory-cli codebase with credit to the original author. Reference it as: "built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by @afar1."
 
 ---
 
 ## Table of Contents
 
-The agent must write content for all sections below and render a linked ToC near the top of the article.
-
-1. [Introduction: The Bookmark Problem Nobody Talks About](#1)
+1. [Introduction: Your Bookmarks Deserve Better](#1)
 2. [Can You Download Your Twitter Bookmarks?](#2)
-3. [What is fieldtheory-cli?](#3)
-4. [How fieldtheory-cli Works Under the Hood](#4)
-5. [Getting Started: Installation and First Sync](#5)
-6. [Core Features and Why They Matter](#6)
-   - 6.1 Full-Text Search with BM25 Ranking
-   - 6.2 LLM-Powered Classification
-   - 6.3 Terminal Dashboard (`ft viz`)
-   - 6.4 Agent Integration (Claude Code, Codex, etc.)
-   - 6.5 Local-First Data Storage
-   - 6.6 OAuth / Cross-Platform Fallback
-7. [Where Are My Saved Bookmarks on Twitter? (And What fieldtheory Does with Them)](#7)
-8. [How to Transfer or Export All Your Twitter Bookmarks](#8)
-9. [Scheduling Automatic Syncs](#9)
-10. [Bugs I Found and Fixed (Real-World Troubleshooting)](#10)
-11. [Is fieldtheory-cli Safe to Use?](#11)
+3. [What is FT GUI?](#3)
+4. [How It Works Under the Hood](#4)
+5. [Getting Started: Install and First Sync](#5)
+6. [Core Features](#6)
+   - 6.1 Full-Text Search
+   - 6.2 LLM Classification
+   - 6.3 Interactive Viz Dashboard
+   - 6.4 Bulk Delete from X
+   - 6.5 Reset Classification
+   - 6.6 Agent Integration
+   - 6.7 Local-First Storage
+7. [Where Are My Saved Bookmarks on Twitter?](#7)
+8. [How to Export All Your Twitter Bookmarks](#8)
+9. [How to Delete Twitter Bookmarks in Bulk](#9)
+10. [Scheduling Automatic Syncs](#10)
+11. [Is FT GUI Safe to Use?](#11)
 12. [Frequently Asked Questions](#12)
 13. [Conclusion](#13)
 
@@ -49,324 +63,276 @@ The agent must write content for all sections below and render a linked ToC near
 
 ---
 
-### Section 1 — Introduction: The Bookmark Problem Nobody Talks About {#1}
+### Section 1 — Introduction: Your Bookmarks Deserve Better {#1}
 
-**Purpose:** Hook the reader with a relatable pain point. Establish why this tool matters before introducing it.
-
-**Angle:** Twitter/X bookmarks are a graveyard of good ideas. They have no folders, no search, no export, and no memory. Users save tweets and never find them again.
+**Purpose:** Hook with the pain point, establish the context.
 
 **Talking points:**
-- Twitter bookmarks are siloed — no native export, no way to search across hundreds of saves
-- X Premium (paid) users get folders, but free users get a flat, unsearchable list
-- People use bookmarks as a personal knowledge base — and the tool fails them
-- Segue: "That's exactly the gap fieldtheory-cli was built to fill"
+- X/Twitter bookmarks are a personal knowledge base that the platform treats as a flat, unsearchable list
+- Free users get no folders, no search within bookmarks, no export
+- Even Premium users with folders still can't bulk-manage or search across everything properly
+- v2.0.0 is a desktop app that turns your bookmark backlog into an actual local library
+- Reference the original open-source CLI (fieldtheory-cli by @afar1) that this builds on
 
-**Keywords to include:** `twitter bookmarks manager`, `twitter bookmarks save and organize`
+**Keywords:** `twitter bookmarks manager`, `twitter bookmarks desktop app`
 
 ---
 
 ### Section 2 — Can You Download Your Twitter Bookmarks? {#2}
 
-**Purpose:** Directly answer a high-intent FAQ search query. This section should be scannable and rank for the question.
-
-**Angle:** Twitter does not offer an official export for bookmarks. But there are workarounds — and fieldtheory-cli is the most powerful free one.
+**Purpose:** Answer the FAQ directly and rank for it.
 
 **Talking points:**
-- Twitter/X has no native "Export Bookmarks" button (as of writing)
-- X's data export (`Settings → Download an archive`) does NOT include bookmarks
-- Paid third-party tools exist but cost money and require API access
-- fieldtheory-cli solves this for free, using your existing Chrome session — no API key needed
-- Answer the question directly: Yes, you can download your Twitter bookmarks — with the right tool
+- X's official "Download archive" does not include bookmarks (as of writing)
+- There is no native export button
+- FT GUI solves this: it reads your browser session (Chrome, Firefox, Brave, Edge) and downloads all your bookmarks locally
+- Runs on Linux, macOS, and Windows
+- No API key or developer account needed for the default mode
 
-**Keywords to include:** `Can you download your Twitter bookmarks?`, `export twitter bookmarks free`, `download twitter bookmarks`
+**Keywords:** `Can you download your Twitter bookmarks?`, `export twitter bookmarks free`, `download twitter bookmarks`
 
 ---
 
-### Section 3 — What is fieldtheory-cli? {#3}
+### Section 3 — What is FT GUI? {#3}
 
-**Purpose:** Introduce the tool clearly and factually.
-
-**Angle:** Short, punchy overview. Let the tool speak for itself.
+**Purpose:** Introduce the product clearly.
 
 **Talking points:**
-- fieldtheory-cli (`ft`) is a free, open-source command-line tool
-- It syncs and stores all your X/Twitter bookmarks locally on your machine
-- Built for Mac natively; Linux and Windows supported via OAuth mode
-- Written in TypeScript, installable via npm in one command
-- Designed by the original author (@afar1) to be agent-friendly — works with Claude Code, Codex, or any shell-access AI agent
-- Link: https://github.com/afar1/fieldtheory-cli
+- FT GUI is the desktop app version of the open-source fieldtheory-cli (MIT license)
+- Available as AppImage / .deb for Linux, .dmg for macOS, .exe installer for Windows
+- Also installable as a CLI via npm: `npm install -g fieldtheory`
+- Built on top of [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by @afar1
+- The CLI remains fully functional — the GUI is additive, not a replacement
+- Key screens: Dashboard, Browse (with multi-select), Search, Sync, Classify, Viz, Stats, and more
 
-**Keywords to include:** `twitter bookmarks exporter`, `export twitter bookmarks free`
+**Keywords:** `twitter bookmarks exporter`, `twitter bookmarks desktop app`, `export twitter bookmarks free`
 
 ---
 
-### Section 4 — How fieldtheory-cli Works Under the Hood {#4}
+### Section 4 — How It Works Under the Hood {#4}
 
-**Purpose:** Explain the technical mechanism in plain language. This is the "how it works" section the brief specifically requested.
+**Purpose:** Demystify the tool.
 
-**Angle:** Demystify the tool without being overwhelming. Readers want to understand what's happening when they run `ft sync`.
-
-**Talking points to cover in this section:**
-
-#### Chrome Session Extraction
-- On first run, `ft sync` reads your locally stored Chrome cookies (from Chrome's local database on disk)
-- It extracts your X/Twitter session token — the same one your browser uses when you're logged in
-- The session cookie is used only for the sync request and is **never stored separately** — it is discarded after use
-- This is why you need Google Chrome installed and logged into X
+#### Browser Session Extraction
+- On sync, the app reads your local browser cookie database (Chrome, Firefox, Brave, Edge, Chromium)
+- Extracts your X session token — the same one your browser uses when you're logged in
+- Cookie is used for the sync request only; never stored separately; discarded after use
 
 #### X's Internal GraphQL API
-- fieldtheory-cli doesn't use the official X Developer API (which requires paid access for bookmark reads)
-- Instead, it uses X's **internal GraphQL API** — the same one that runs when you scroll through your bookmarks in the browser
-- This is why no API key or developer account is required
-- Optional: OAuth mode (`ft auth` + `ft sync --api`) uses the official v2 API for cross-platform use
+- Does not use the official X Developer API (requires paid access for bookmarks)
+- Uses X's internal GraphQL API — the same one powering the Twitter web app
+- No API key, no developer account required in default mode
+- OAuth fallback available (`ft auth` + `ft sync --api`) for platforms where session extraction isn't available
 
 #### Local Data Pipeline
-- Fetched bookmarks are saved as `bookmarks.jsonl` (one JSON object per line)
-- An SQLite FTS5 (Full-Text Search 5) index is built at `bookmarks.db`
-- Sync metadata is tracked in `bookmarks-meta.json`
-- All data lands in `~/.ft-bookmarks/` — fully local, nothing sent to a server
+- Bookmarks saved as `bookmarks.jsonl` (one JSON record per line) — the source of truth
+- SQLite FTS5 index built at `bookmarks.db` for full-text search
+- All data under `~/.fieldtheory/bookmarks/` — nothing sent to any server
 
-#### Incremental vs Full Sync
-- Default `ft sync` is incremental — only fetches new bookmarks since the last run
-- `ft sync --full` crawls the entire bookmark history from scratch
-
-**Keywords to include:** `download twitter bookmarks`, `How can I export all my bookmarks?`
+**Keywords:** `download twitter bookmarks`, `How can I export all my bookmarks?`
 
 ---
 
-### Section 5 — Getting Started: Installation and First Sync {#5}
+### Section 5 — Getting Started: Install and First Sync {#5}
 
-**Purpose:** Step-by-step onboarding guide. Should feel like a tutorial.
+**Purpose:** Tutorial-style onboarding.
 
-**Requirements to state clearly:**
-- Node.js 20 or higher
-- Google Chrome (logged into X/Twitter)
-- macOS (for Chrome session sync mode)
-
-**Steps to walk through:**
+**Desktop app path:**
+```bash
+# Download the AppImage (Linux), dmg (macOS), or exe (Windows) from GitHub Releases
+# Or build from source:
+git clone https://github.com/afar1/fieldtheory-cli
+cd fieldtheory-cli
+pnpm install
+pnpm gui:pack    # builds AppImage + deb
+pnpm gui:start   # launch
 ```
+
+**CLI path:**
+```bash
 npm install -g fieldtheory
 ft sync
 ft search "your topic"
 ft viz
-ft categories
 ```
 
 **Talking points:**
-- The first `ft sync` may take a minute depending on how many bookmarks you have
-- All data lands in `~/.ft-bookmarks/` — explain what each file is
-- Mention `ft status` to check sync state
-- Mention `FT_DATA_DIR` env variable for custom storage path
+- First sync may take 1–5 minutes depending on how many bookmarks you have
+- The app auto-detects your browser; if multiple browsers are logged into X, it picks the first valid session
+- All data lands in `~/.fieldtheory/bookmarks/`
+- Use `ft status` or the GUI Settings screen to confirm sync state
 
 ---
 
-### Section 6 — Core Features and Why They Matter {#6}
+### Section 6 — Core Features {#6}
 
-**Purpose:** The meaty "features" section. Each subsection covers one feature, explains what it does, and argues why it's useful.
+Write each as its own subsection with a command example, what it does, and why it matters.
 
----
+#### 6.1 Full-Text Search
+- GUI: Search screen with instant results
+- CLI: `ft search "distributed systems"`
+- Uses SQLite FTS5 with BM25 ranking — the same relevance algorithm used by professional search engines
+- Searches tweet text, author handles, and extracted article body text
+- Why it matters: X's native search can't search *your* bookmarks specifically
 
-#### 6.1 Full-Text Search with BM25 Ranking
-
-- Command: `ft search "distributed systems"`
-- Uses SQLite FTS5 with BM25 ranking — the same algorithm used by search engines to rank relevance
-- Search across hundreds or thousands of bookmarks instantly, locally
-- Why it matters: Twitter's native search can't search *your bookmarks specifically*. This gives you a personal, offline search engine over your saved tweets.
-
----
-
-#### 6.2 LLM-Powered Classification (`ft classify`)
-
-- Command: `ft classify` or `ft sync --classify`
-- Sends bookmark text to a local or connected LLM to categorize each one
+#### 6.2 LLM Classification
+- GUI: Classify screen with two-phase progress bar (categories → subject domains)
+- CLI: `ft classify` or `ft sync --classify`
+- Sends bookmark text to Claude, Codex, or any OpenAI-compatible API
 - Built-in categories: `tool`, `security`, `technique`, `launch`, `research`, `opinion`, `commerce`
-- Regex fallback available: `ft classify --regex` for lightweight classification without an LLM
-- `ft categories` shows distribution; `ft domains` shows subject domain breakdown
-- Why it matters: Transforms a flat list of saved tweets into an organized knowledge library
+- Regex fallback: `ft classify --regex` (no LLM needed)
+- Why it matters: transforms a flat list into an organized, filterable knowledge base
 
----
+#### 6.3 Interactive Viz Dashboard
+- GUI: Viz screen with 14 Recharts panels (interactive, responsive)
+- CLI: `ft viz` (ANSI terminal version)
+- Panels include: publication rhythm (area chart), post weekdays (radar), posting hours (bar), top authors, where links lead, categories, domains, hidden gems, time capsules, rising voices
+- Why it matters: gives insight into your bookmarking habits and content patterns at a glance
 
-#### 6.3 Terminal Dashboard (`ft viz`)
+#### 6.4 Bulk Delete from X
+- New in v2.0.0
+- GUI: Browse screen → multi-select bookmarks → "Remove from X" button
+- Also available as a post-sync option: "Remove from X after sync" checkbox in the Sync screen
+- Uses the same browser-cookie authentication as sync — no OAuth re-auth needed
+- Rate-limited to 250ms between requests to avoid triggering X's rate limits
+- Local copy is always kept — only the X bookmark list is cleaned up
+- Why it matters: lets you use X bookmarks as a processing queue — save, sync, then clear the queue
 
-- Command: `ft viz`
-- Renders an in-terminal dashboard with sparklines, category breakdowns, and domain stats
-- No browser, no app — pure terminal visualization
-- Why it matters: Gives instant visual insight into your bookmarking habits and content patterns
+#### 6.5 Reset Classification
+- New in v2.0.0
+- GUI: multi-select in Browse → "Reset classification"; or Classify screen → "Reset all first"
+- CLI: `resetClassification()` available programmatically
+- Clears categories, primary category, domains from the SQLite DB
+- Next classify run re-processes the reset bookmarks from scratch
+- Why it matters: run a fresh classify with a new engine or after improving your prompts without rebuilding the whole index
 
----
+#### 6.6 Agent Integration
+- Because all data is local and accessible via CLI, any AI agent with shell access can query it
+- Install the skill: `ft skill install` (auto-detects Claude Code and Codex)
+- Example prompts: "What have I bookmarked about Rust performance in the last year?" / "Find the best open-source AI memory tools I saved"
+- Why it matters: your bookmark library becomes a queryable second brain
 
-#### 6.4 Agent Integration (Claude Code, Codex, etc.)
-
-- fieldtheory is explicitly designed to work with AI coding agents
-- Because all data is local and accessible via CLI, any agent with shell access can query it
-- Example prompts to include (from the README):
-  - *"What have I bookmarked about cancer research in the last three years?"*
-  - *"I bookmarked several open source AI memory tools. Pick the best one and incorporate it."*
-  - *"Every day, sync any new X bookmarks using the Field Theory CLI."*
-- Why it matters: Your bookmarks become a queryable second brain that AI agents can read, search, and reason over
-
----
-
-#### 6.5 Local-First Data Storage
-
-- All data is stored at `~/.ft-bookmarks/` — no cloud, no account, no third-party sync
-- Files: `bookmarks.jsonl`, `bookmarks.db`, `bookmarks-meta.json`
-- No telemetry, no analytics, nothing sent home
-- Delete everything cleanly: `rm -rf ~/.ft-bookmarks`
-- Why it matters: Full ownership of your data. No vendor lock-in, no subscription, no privacy trade-off
-
----
-
-#### 6.6 OAuth / Cross-Platform Fallback (`ft sync --api`)
-
-- Chrome session sync is macOS-only (uses macOS Keychain)
-- Linux and Windows users: run `ft auth` to set up OAuth, then `ft sync --api`
-- Uses official X v2 API in this mode
-- Why it matters: The tool isn't Mac-only — it just has a simpler default flow on Mac
+#### 6.7 Local-First Storage
+- `~/.fieldtheory/bookmarks/` — no cloud, no account, no subscription
+- `bookmarks.jsonl` is the canonical source; the SQLite index is rebuilt from it at any time
+- Delete everything: `rm -rf ~/.fieldtheory/bookmarks`
+- Why it matters: full ownership, no vendor lock-in, works offline
 
 ---
 
 ### Section 7 — Where Are My Saved Bookmarks on Twitter? {#7}
 
-**Purpose:** Answer the FAQ directly, then pivot to how fieldtheory surfaces them locally.
+**Purpose:** FAQ answer + pivot to local access.
 
 **Talking points:**
-- On Twitter/X, bookmarks live at `twitter.com/i/bookmarks` — accessible from the left sidebar (or hamburger menu on mobile)
-- They're stored server-side on X's infrastructure — not on your device
-- You cannot access them via X's data archive download
-- With fieldtheory-cli, a local copy is maintained at `~/.ft-bookmarks/bookmarks.jsonl` — now *you* control the data
-- `ft list` and `ft show <id>` let you browse and inspect individual entries
+- On X, bookmarks live at `x.com/i/bookmarks` — server-side only
+- Not included in X's data archive download
+- FT GUI mirrors them to `~/.fieldtheory/bookmarks/bookmarks.jsonl`
+- Browse and search them in the GUI's Browse and Search screens, or with `ft list` and `ft show <id>` in the CLI
 
-**Keywords to include:** `Where are my saved bookmarks on Twitter?`, `twitter bookmarks save and organize`
+**Keywords:** `Where are my saved bookmarks on Twitter?`
 
 ---
 
-### Section 8 — How to Transfer or Export All Your Twitter Bookmarks {#8}
+### Section 8 — How to Export All Your Twitter Bookmarks {#8}
 
-**Purpose:** Directly answer the transfer/export FAQ. Practical guidance.
-
-**Angle:** fieldtheory is currently the best free tool for this. Walk through the process.
+**Purpose:** Answer the export FAQ with practical steps.
 
 **Talking points:**
-- Twitter has no official export — this is a real gap
-- fieldtheory gives you `bookmarks.jsonl` — a standard, portable format (one JSON per line)
-- From there, you can: pipe it to a spreadsheet, load it into a database, feed it to an LLM, or back it up to another machine
-- `ft sync --full` ensures you get the entire history, not just recent bookmarks
-- Mention `FT_DATA_DIR` for exporting to a specific path
-- For users migrating platforms or archiving: this is currently the most complete free option
+- `ft sync --rebuild` fetches the entire history
+- Output: `bookmarks.jsonl` — one JSON record per line, portable to any tool
+- Can be imported into Google Sheets, Notion, a database, or a custom RAG pipeline
+- Use `FT_DATA_DIR` to write the data to a specific export path
+- This is currently the most complete free export option for X/Twitter bookmarks
 
-**Keywords to include:** `How do I transfer all Twitter bookmarks?`, `How can I export all my bookmarks?`, `twitter bookmarks exporter`
+**Keywords:** `How do I transfer all Twitter bookmarks?`, `twitter bookmarks exporter`
 
 ---
 
-### Section 9 — Scheduling Automatic Syncs {#9}
+### Section 9 — How to Delete Twitter Bookmarks in Bulk {#9}
 
-**Purpose:** Show the power-user workflow. Short section.
+**Purpose:** New section — addresses a real user need and a keyword that wasn't in the original brief.
 
 **Talking points:**
-- Use cron on Mac/Linux to schedule syncs
-- Example cron jobs (from README):
-  ```
-  # Sync every morning at 7am
-  0 7 * * * ft sync
+- X has no native "select all and delete" or bulk-remove feature
+- FT GUI's Browse screen supports multi-select; "Remove from X" calls X's internal `DeleteBookmark` mutation
+- The "Remove from X after sync" option in the Sync screen automates the workflow: sync → keep locally → clear from X
+- Useful for treating bookmarks as a processing queue
+- Rate-limited to avoid triggering X's API limits; a progress counter shows status
+- Local copy is always preserved — this is unbookmarking on X, not deletion from your local library
 
-  # Sync and classify every morning
-  0 7 * * * ft sync --classify
-  ```
-- Combined with agent integration, you can build a fully automated personal knowledge pipeline
-- "Set it and forget it" — your bookmark archive grows automatically
+**Keywords:** `How do I delete all my Twitter bookmarks?`, `delete twitter bookmarks`
 
 ---
 
-### Section 10 — Bugs I Found and Fixed (Real-World Troubleshooting) {#10}
+### Section 10 — Scheduling Automatic Syncs {#10}
 
-**Purpose:** Establish the author's credibility and make the post unique. This is the personal angle that differentiates this from a generic tool review.
+**Purpose:** Power-user workflow. Short section.
 
-**Instructions for the writing agent:**
-- The author (you) cloned the original repo and ran into bugs while using it
-- You debugged, traced the issues, and made fixes/improvements
-- **Do not invent specific bug details** — the author should fill in the actual specifics here
-- Write this section as a placeholder frame:
-  - Open with: "When I first ran `ft sync`, I hit [AUTHOR: describe the bug here]..."
-  - Describe the investigation process (what error message appeared, where you looked)
-  - Describe the fix or workaround
-  - Close with: what the experience taught you about how the tool works internally
-- Tone: candid, developer-to-developer. This is not a sales section — it's honest experience.
+```bash
+# Sync every morning at 7am
+0 7 * * * ft sync
 
-> **[AUTHOR NOTE: Fill in the specific bugs and fixes you made in this section before publishing.]**
+# Sync, classify, and remove from X every morning
+0 7 * * * ft sync --classify
+```
+
+- Combined with agent integration, this is a fully automated personal knowledge pipeline
+- On macOS: `ft possible nightly install` sets up a LaunchAgent for nightly Possible runs
 
 ---
 
-### Section 11 — Is fieldtheory-cli Safe to Use? {#11}
+### Section 11 — Is FT GUI Safe to Use? {#11}
 
-**Purpose:** Address the obvious security concern: "does this tool steal my Twitter cookies?"
+**Purpose:** Address the security concern directly.
 
 **Talking points:**
-- The tool reads Chrome's local cookie database — this is a legitimate concern worth addressing head-on
-- Key facts from the source:
-  - Cookies are read locally from your machine, never transmitted to a third party
-  - The session cookie is used only for the sync request, then discarded — it is never stored in any file
-  - All network requests go only to X's API during sync — no other outbound connections
-  - No telemetry, no analytics, nothing phoned home
-  - OAuth tokens (if used) are stored with `chmod 600` — owner-only file permissions
-  - Fully open source — anyone can audit the code at https://github.com/afar1/fieldtheory-cli
-- Recommended: review the source before running if you're security-conscious — it's a small, readable codebase
+- The app reads browser cookies from local disk — legitimate concern to address head-on
+- Cookies are used only for the sync/delete request and are discarded; never stored to any file
+- All network requests go only to X's API — no third-party endpoints
+- No telemetry, no analytics, nothing phoned home
+- The GUI renderer runs with Electron context isolation — it has no direct Node.js access
+- OAuth tokens stored `chmod 600` (owner-only)
+- Fully open source: [github.com/afar1/fieldtheory-cli](https://github.com/afar1/fieldtheory-cli)
 
 ---
 
 ### Section 12 — Frequently Asked Questions {#12}
 
-**Purpose:** Structured FAQ block for SEO. Each question should have a direct, 2–4 sentence answer.
-
-Write clear answers for each:
+Write direct 2–4 sentence answers for each:
 
 1. **Can you download your Twitter bookmarks?**
-   → Yes, using fieldtheory-cli. It extracts your Chrome session and syncs all bookmarks locally as JSON. No API key required.
-
-2. **Where are my saved bookmarks on Twitter?**
-   → They live at `twitter.com/i/bookmarks` and are stored on X's servers. fieldtheory-cli creates a local copy at `~/.ft-bookmarks/`.
-
-3. **How do I transfer all Twitter bookmarks?**
-   → Run `ft sync --full` to get your complete history, then copy or use `FT_DATA_DIR` to move the data folder anywhere.
-
-4. **How can I export all my bookmarks?**
-   → fieldtheory-cli exports them as `bookmarks.jsonl` — a portable JSON Lines file you can open in any editor, database, or script.
-
-5. **Is fieldtheory-cli free?**
-   → Yes. It's fully open source under the MIT license.
-
-6. **Does fieldtheory work on Windows or Linux?**
-   → Yes, via OAuth mode (`ft auth` + `ft sync --api`). The default Chrome session sync is macOS-only.
-
-7. **Does it require an X/Twitter API key?**
-   → No. The default sync uses X's internal API via your browser session — no developer account needed.
+2. **Is there a desktop app for Twitter bookmarks?**
+3. **How do I delete all my Twitter bookmarks at once?**
+4. **Where are my saved bookmarks on Twitter?**
+5. **How do I export all my bookmarks from X?**
+6. **Does it require an X/Twitter API key?**
+7. **Does it work on Windows and Linux?**
+8. **Is FT GUI free?**
 
 ---
 
 ### Section 13 — Conclusion {#13}
 
-**Purpose:** Wrap up with a clear takeaway and CTA.
-
 **Talking points:**
-- Twitter bookmarks are more valuable than the platform lets you treat them
-- fieldtheory-cli turns a locked, unsearchable list into a searchable, classifiable, agent-accessible local database
-- It's free, open source, and respects your data
-- End with a call to action: star the repo, try the install, or share the post
-- Optional personal close: mention that after fixing the bugs and spending time with the codebase, you now run `ft sync --classify` on a cron — and actually find your bookmarks again
+- X bookmarks are too valuable to leave in a locked, unsearchable silo
+- FT GUI gives you a local desktop app backed by a proven CLI — sync, search, classify, delete, and automate
+- Built on the original fieldtheory-cli (open source, MIT)
+- CTA: download the AppImage/deb/dmg/exe from GitHub Releases, or install the CLI via npm
+- Link to: https://github.com/afar1/fieldtheory-cli
 
 ---
 
-## Writing Style Rules (for the agent)
+## Writing Style Rules
 
 - Use H2 for main sections, H3 for subsections
-- Code blocks for all CLI commands
-- Keep paragraphs short — 3 sentences max where possible
-- No marketing fluff ("game-changing", "revolutionary") — be direct
-- Link to the GitHub repo at least twice: once in Section 3 and once in Section 11
-- Do not fabricate benchmark numbers or performance claims
-- Use "X" and "Twitter" interchangeably — both are understood by the audience
-- The `[AUTHOR NOTE]` placeholder in Section 10 must be preserved for the human author to fill in
+- Code blocks for all CLI commands and paths
+- Keep paragraphs short — 3 sentences max
+- No marketing fluff — be direct and specific
+- Link to the GitHub repo at least twice
+- Use "X" and "Twitter" interchangeably
+- "FT GUI" is the desktop app name; "ft" is the CLI command; "fieldtheory-cli" is the original repo/package name
 
 ---
 
-*Brief prepared for: fieldtheory-cli blog post | Keywords: twitter bookmarks manager, twitter bookmarks exporter, export twitter bookmarks free, download twitter bookmarks, twitter bookmarks save and organize*
+*Brief for: FT GUI v2.0.0 blog post | Keywords: twitter bookmarks manager, twitter bookmarks exporter, export twitter bookmarks free, download twitter bookmarks, delete twitter bookmarks, twitter bookmarks desktop app*

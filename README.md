@@ -1,51 +1,105 @@
-# Field Theory CLI
+# FT GUI — Field Theory
 
-Sync and store locally all of your X/Twitter bookmarks. Search, classify, and make them available to Claude Code, Codex, or any agent with shell access.
+Self-custody for your X/Twitter bookmarks. Sync, search, classify, and explore locally — as a desktop app or a CLI.
 
-Free and open source. Designed for Mac.
+**v2.0.0** | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1) | MIT License | Linux · macOS · Windows
+
+---
 
 ## Install
+
+### Desktop app (FT GUI)
+
+Download the latest release for your platform:
+
+| Platform | Format |
+|----------|--------|
+| Linux | `.AppImage` (portable) or `.deb` |
+| macOS | `.dmg` |
+| Windows | `.exe` (NSIS installer) |
+
+Or build from source:
+
+```bash
+git clone https://github.com/afar1/fieldtheory-cli
+cd fieldtheory-cli
+pnpm install
+pnpm gui:pack          # → release/FT GUI-2.0.0.AppImage + .deb
+pnpm gui:start         # run the built app
+```
+
+### CLI only
 
 ```bash
 npm install -g fieldtheory
 ```
 
-Requires Node.js 20+. A Chrome-family browser or Firefox is recommended for session sync; OAuth is available for all platforms.
+Requires Node.js 20+.
 
-## Quick start
+---
+
+## GUI screens
+
+| Screen | What it does |
+|--------|-------------|
+| Dashboard | Status at a glance — sync state, classified count, quick actions |
+| Browse | Paginated library with multi-select, bulk delete from X, reset classification |
+| Search | Full-text BM25 search across all bookmarks and article text |
+| Sync | Start a sync with live progress bar; optionally remove from X after syncing |
+| Classify | LLM classify with two-phase progress (categories → subject domains) |
+| Viz | Interactive Recharts dashboard — 14 panels (rhythm, authors, domains, gems, etc.) |
+| Stats | Author leaderboard, language breakdown |
+| Categories / Domains / Folders | Distribution charts |
+| Bookmark detail | Full tweet, article, quoted tweet, engagement stats |
+| Media | Fetch and download images and video posters |
+| Settings | Index rebuild, data path |
+
+### New in v2.0.0
+
+**Bulk delete from X** — select any number of bookmarks in Browse, click "Remove from X." Removes them from your X account while keeping your local copy. Uses the same browser-cookie auth as sync (no OAuth needed).
+
+**Reset classification** — multi-select bookmarks → "Reset classification" to mark them unclassified. The next classify run re-processes them from scratch. Also available per-bookmark in the detail view, and as a "reset all" option in the Classify screen.
+
+**Auto-updater** — the app checks GitHub Releases on startup and downloads updates silently. A banner appears when a new version is ready; it installs on next quit.
+
+---
+
+## CLI quick start
 
 ```bash
-# 1. Sync your bookmarks (needs a supported browser logged into X)
+# Sync your bookmarks (needs a browser logged into X)
 ft sync
 
-# 2. Search them
+# Search
 ft search "distributed systems"
 
-# 3. Explore
+# Dashboard
 ft viz
+
+# Classification
+ft classify
 ft categories
-ft stats
+ft domains
 ```
 
-On first run, `ft sync` extracts your X session from your browser and downloads your bookmarks into `~/.fieldtheory/bookmarks/`.
+On first run, `ft sync` detects your browser session and downloads bookmarks into `~/.fieldtheory/bookmarks/`.
 
-## Commands
+---
+
+## CLI commands
 
 ### Sync
 
 | Command | Description |
 |---------|-------------|
-| `ft sync` | Download and sync bookmarks, then fetch any missing media (photos, video posters, capped videos). No API required. |
-| `ft sync --no-media` | Sync bookmarks only; skip the media download pass |
-| `ft sync --skip-profile-images` | Sync bookmarks and post media but skip author profile images |
+| `ft sync` | Incremental sync via browser session |
 | `ft sync --rebuild` | Full re-crawl of all bookmarks |
-| `ft sync --continue` | Resume a paused or interrupted sync from the saved cursor |
-| `ft sync --gaps` | Backfill quoted tweets, expand truncated/X Article text, enrich linked articles, and fill any media gaps |
-| `ft sync --folders` | Also sync X bookmark folder tags (read-only mirror of X state) |
-| `ft sync --folder <name>` | Sync a single folder by name (exact or unambiguous prefix) |
-| `ft sync --classify` | Sync then classify new bookmarks with LLM |
-| `ft sync --api` | Sync via OAuth API (cross-platform) |
-| `ft auth` | Set up OAuth for API-based sync (optional) |
+| `ft sync --continue` | Resume an interrupted sync |
+| `ft sync --gaps` | Backfill quoted tweets, expand truncated text, enrich linked articles |
+| `ft sync --folders` | Sync X bookmark folder tags |
+| `ft sync --classify` | Sync then classify with LLM |
+| `ft sync --api` | Sync via OAuth v2 API (cross-platform, no browser needed) |
+| `ft auth` | Set up OAuth for API-based sync |
 
 ### Search and browse
 
@@ -53,118 +107,75 @@ On first run, `ft sync` extracts your X session from your browser and downloads 
 |---------|-------------|
 | `ft search <query>` | Full-text search with BM25 ranking |
 | `ft list` | Filter by author, date, category, domain, or folder |
-| `ft list --folder <name>` | Show bookmarks in an X bookmark folder |
 | `ft show <id>` | Show one bookmark in detail |
 | `ft sample <category>` | Random sample from a category |
 | `ft stats` | Top authors, languages, date range |
-| `ft viz` | Terminal dashboard with sparklines, categories, and domains |
-| `ft categories` | Show category distribution |
+| `ft viz` | Terminal dashboard |
+| `ft categories` | Category distribution |
 | `ft domains` | Subject domain distribution |
-| `ft folders` | Show X bookmark folder distribution (requires `ft sync --folders` first) |
+| `ft folders` | X bookmark folder distribution |
 
 ### Classification
 
 | Command | Description |
 |---------|-------------|
-| `ft classify` | Classify by category and domain using LLM |
-| `ft classify --regex` | Classify by category using simple regex |
-| `ft classify-domains` | Classify by subject domain only (LLM) |
-| `ft classify --engine <name>` | Override the LLM engine for one run (also works on `ft sync --classify` and `ft classify-domains`) |
+| `ft classify` | LLM classification (categories + domains) |
+| `ft classify --regex` | Regex-only classification |
+| `ft classify-domains` | Domain classification only |
 | `ft model` | View or change the default LLM engine |
 
 ### Knowledge base
 
 | Command | Description |
 |---------|-------------|
-| `ft md` | Export bookmarks as individual markdown files, including enriched article text |
-| `ft md --changed` | Re-export only markdown files whose source bookmark data changed |
-| `ft wiki` | Compile a Karpathy-style interlinked knowledge base |
-| `ft ask <question>` | Ask questions against the knowledge base |
-| `ft ask <question> --save` | Ask and save the answer as a concept page |
-| `ft lint` | Health-check the wiki for broken links and missing pages |
-| `ft lint --fix` | Auto-fix fixable wiki issues |
+| `ft md` | Export bookmarks as markdown files |
+| `ft wiki` | Compile an interlinked knowledge base |
+| `ft ask <question>` | Query the knowledge base |
+| `ft lint` | Health-check the wiki |
 
 ### Possibility runs
 
 | Command | Description |
 |---------|-------------|
-| `ft seeds search "<query>" --create` | Save a bookmark-grounded seed |
-| `ft repos add <path>` | Add a repo to the default repo set |
 | `ft possible` | Interactive seed + repo + frame wizard |
-| `ft possible run --defaults` | Re-run with the most-recently-used seed and saved repos |
-| `ft possible run --background` | Start a run as a background job |
-| `ft possible prompt <node-id>` | Print the goal prompt for one plotted node |
-| `ft possible nightly install` | Install a nightly Possible run on macOS |
-
-### Field Theory app companion
-
-| Command | Description |
-|---------|-------------|
-| `ft paths --json` | Show canonical bookmarks, Library, Commands, and compatibility paths |
-| `ft status --json` | Show bookmark/classification status plus Field Theory paths |
-| `ft library search <query>` | Search local Field Theory Library markdown |
-| `ft library show <path>` | Print a Library page and its version metadata with `--json` |
-| `ft library create <path> --stdin` | Create a new Library page under `~/.fieldtheory/library` |
-| `ft library update <path> --stdin --expected-sha256 <hash>` | Replace a Library page with conflict protection |
-| `ft library delete <path>` | Move a Library page to Trash; the Mac app owns remote sync tombstones |
-| `ft library open <path>` | Open a Library page in the Field Theory Mac app |
-| `ft commands list` | List portable commands under `~/.fieldtheory/commands` |
-| `ft commands new <name>` | Create a reusable portable command |
-| `ft commands validate [name]` | Check command shape and guardrails |
-| `ft install app` | Download and install the latest Field Theory Mac app from `afar1/field-releases` |
-
-`ft library open` targets the packaged Field Theory app by bundle id (`com.fieldtheory.app`) instead of trusting the system-wide `fieldtheory://` handler. That avoids accidentally opening a generic Electron development app when another checkout registered the same URL scheme.
-
-For local Field Theory app development, point the CLI at the dev checkout:
-
-```bash
-export FT_APP_DEV_DIR=/Users/you/dev/fieldtheory/mac-app
-ft library open notes/example.md
-```
-
-Packaged variants can override the bundle id with `FT_APP_BUNDLE_ID`. Advanced development launchers can set `FT_APP_OPEN_COMMAND` to an executable that receives the deep-link URL as its first argument.
-
-### Agent integration
-
-| Command | Description |
-|---------|-------------|
-| `ft skill install` | Install `/fieldtheory` skill for Claude Code and Codex |
-| `ft skill show` | Print skill content to stdout |
-| `ft skill uninstall` | Remove installed skill files |
+| `ft seeds search "<query>" --create` | Save a bookmark-grounded seed |
+| `ft repos add <path>` | Add a repo to the default set |
+| `ft possible run --defaults` | Re-run with last-used settings |
+| `ft possible nightly install` | Schedule a nightly run (macOS LaunchAgent) |
 
 ### Utilities
 
 | Command | Description |
 |---------|-------------|
-| `ft index` | Rebuild search index from JSONL cache (preserves classifications) |
-| `ft fetch-media` | Backfill/download X media assets for existing bookmarks (default: all pending bookmarks) |
-| `ft fetch-media --skip-profile-images` | Download post media without author profile images |
-| `ft status` | Show sync/classification status and data location |
-| `ft path` | Print data directory path |
+| `ft index` | Rebuild search index from JSONL cache |
+| `ft fetch-media` | Download media assets for bookmarks |
+| `ft status` | Sync/classification status and data path |
+| `ft path` | Print the data directory |
+| `ft skill install` | Install `/fieldtheory` skill for Claude Code / Codex |
+
+---
 
 ## Agent integration
 
-Install the `/fieldtheory` skill so your agent automatically searches your bookmarks when relevant:
+Install the `/fieldtheory` skill so your AI agent searches your bookmarks automatically:
 
 ```bash
-ft skill install     # Auto-detects Claude Code and Codex
+ft skill install
 ```
 
 Then ask your agent:
 
-> "What have I bookmarked about cancer research in the last three years and how has it progressed?"
+> "What have I bookmarked about cancer research in the last three years?"
 
-> "I bookmarked a number of new open source AI memory tools. Pick the best one and figure out how to incorporate it in this repo."
+> "Find the best open-source AI memory tools I saved and suggest how to use one in this repo."
 
-> "Your goal is to look at AI agent bookmarks and come up with a roadmap plotted in the grid of what I should do next across the Field Theory CLI and Mac app projects."
-
-> "Every day please sync any new X bookmarks using the Field Theory CLI."
+> "Every day, sync any new X bookmarks using the Field Theory CLI."
 
 Works with Claude Code, Codex, or any agent with shell access.
 
-## Scheduling
+---
 
-Sync with cron:
+## Scheduling
 
 ```bash
 # Sync every morning at 7am
@@ -174,118 +185,67 @@ Sync with cron:
 0 7 * * * ft sync --classify
 ```
 
-Run Possible every night on macOS with LaunchAgent:
-
-```bash
-ft seeds search "agents" --days 90 --limit 8 --frame leverage-specificity --create
-ft repos add ~/dev/fieldtheory
-ft repos add ~/dev/fieldtheory-cli
-
-ft possible nightly install --time 02:00 --defaults --model opus --effort medium --nodes 5
-ft possible nightly show
-```
-
-Nightly schedules are stored under `~/.fieldtheory/ideas/nightly/`. Each tick starts a normal background job under `~/.fieldtheory/ideas/jobs/`, using your local logged-in CLI sessions and the current `PATH` captured in the LaunchAgent plist.
-
-`ft` respects standard proxy environment variables for network requests: `HTTPS_PROXY`, `HTTP_PROXY`, `ALL_PROXY`, and `NO_PROXY`.
+---
 
 ## Data
 
-Data is stored locally under `~/.fieldtheory/`:
+Stored locally under `~/.fieldtheory/`:
 
 ```
 ~/.fieldtheory/bookmarks/
-  bookmarks.jsonl         # raw bookmark cache (one per line)
+  bookmarks.jsonl         # raw cache — source of truth
   bookmarks.db            # SQLite FTS5 search index
   bookmarks-meta.json     # sync metadata
-  oauth-token.json        # OAuth token (if using API mode, chmod 600)
 
-~/.fieldtheory/library/
-  index.md                # markdown knowledge base (ft wiki / ft md)
-
-~/.fieldtheory/commands/
-  *.md                    # portable commands used by Field Theory and agents
-
-~/.fieldtheory/ideas/
-  seeds/runs/nodes/       # Possible seeds, runs, and node prompt artifacts
-  batches/jobs/nightly/   # Multi-repo batches, background jobs, and schedules
+~/.fieldtheory/library/   # ft wiki / ft md output
+~/.fieldtheory/ideas/     # seeds, runs, nodes, jobs
 ```
 
-Override locations with `FT_DATA_DIR`, `FT_LIBRARY_DIR`, and `FT_COMMANDS_DIR`:
+Override with `FT_DATA_DIR`, `FT_LIBRARY_DIR`, `FT_COMMANDS_DIR`.
 
-```bash
-export FT_DATA_DIR=/path/to/custom/dir
-export FT_LIBRARY_DIR=/path/to/custom/library
-export FT_COMMANDS_DIR=/path/to/custom/commands
-```
+---
 
-To remove bookmark and Library data: `rm -rf ~/.fieldtheory/bookmarks ~/.fieldtheory/library`
-
-## Categories
+## Classification categories
 
 | Category | What it catches |
 |----------|----------------|
-| **tool** | GitHub repos, CLI tools, npm packages, open-source projects |
-| **security** | CVEs, vulnerabilities, exploits, supply chain |
-| **technique** | Tutorials, demos, code patterns, "how I built X" |
-| **launch** | Product launches, announcements, "just shipped" |
+| **tool** | GitHub repos, CLI tools, npm packages |
+| **security** | CVEs, vulnerabilities, exploits |
+| **technique** | Tutorials, code patterns, "how I built X" |
+| **launch** | Product announcements, releases |
 | **research** | ArXiv papers, studies, academic findings |
-| **opinion** | Takes, analysis, commentary, threads |
-| **commerce** | Products, shopping, physical goods |
+| **opinion** | Takes, analysis, threads |
+| **commerce** | Products, shopping |
 
-Use `ft classify` for LLM-powered classification that catches what regex misses.
-
-## Windows Notes
-
-In PowerShell, use `fieldtheory` or `ft.cmd` instead of `ft` because `ft` is already a built-in alias for `Format-Table`.
-
-If browser session sync cannot find the right profile, pass the browser and profile explicitly:
-
-```powershell
-fieldtheory sync --browser chrome --chrome-profile-directory "Default"
-fieldtheory sync --browser edge --chrome-profile-directory "Default"
-```
-
-For Firefox, if profile detection misses the profile, pass the profile directory explicitly with `--firefox-profile-dir`.
-
-If cookie extraction still fails, close the browser completely and retry. As a last resort, pass cookies manually:
-
-```powershell
-fieldtheory sync --cookies <ct0> <auth_token>
-```
-
-Treat `ct0` and `auth_token` like passwords. Do not paste them into logs, issues, or chat.
+---
 
 ## Platform support
 
 | Feature | macOS | Linux | Windows |
 |---------|-------|-------|---------|
-| Session sync (`ft sync`) | Chrome, Chromium, Brave, Edge, Helium, Comet, Dia, Firefox | Chrome, Chromium, Brave, Edge, Firefox | Chrome, Chromium, Brave, Edge, Firefox |
-| OAuth API sync (`ft sync --api`) | Yes | Yes | Yes |
-| Search, list, classify, viz, wiki | Yes | Yes | Yes |
+| **FT GUI desktop app** | ✓ dmg | ✓ AppImage / deb | ✓ exe |
+| Session sync (`ft sync`) | Chrome, Brave, Firefox, Edge, + more | Chrome, Brave, Firefox, Edge | Chrome, Brave, Firefox, Edge |
+| OAuth sync (`ft sync --api`) | ✓ | ✓ | ✓ |
+| All CLI commands | ✓ | ✓ | ✓ |
 
-Session sync extracts cookies from your browser's local database. Use `ft sync --browser <name>` to pick a browser. On Windows, Firefox requires Node.js 22.5+ or `sqlite3` on PATH. For unsupported browsers or platforms, use `ft auth` + `ft sync --api`.
+On Linux, run the GUI with `--no-sandbox` if you haven't set up the Chrome sandbox. The AppImage handles this automatically.
+
+On Windows, use `fieldtheory` or `ft.cmd` instead of `ft` (PowerShell uses `ft` for `Format-Table`).
+
+---
 
 ## Security
 
-**Your data stays local.** No telemetry, no analytics, nothing phoned home. The CLI only makes network requests to X's API during sync.
+**Your data stays local.** No telemetry, no analytics, nothing phoned home.
 
-**Chrome session sync** reads cookies from Chrome's local database, uses them for the sync request, and discards them. Cookies are never stored separately.
+- Browser session cookies are read from your local disk, used for the sync request, and discarded — never stored.
+- All network requests go only to X's API during sync.
+- OAuth tokens are stored `chmod 600` (owner-only).
+- The GUI runs with context isolation — the renderer has no Node.js access.
+- Fully open source — audit every line at [github.com/afar1/fieldtheory-cli](https://github.com/afar1/fieldtheory-cli).
 
-**OAuth tokens** are stored with `chmod 600` (owner-only). Treat `~/.fieldtheory/bookmarks/oauth-token.json` like a password.
-
-**The default sync uses X's internal GraphQL API**, the same API that x.com uses in your browser. For the official v2 API, use `ft auth` + `ft sync --api`.
+---
 
 ## License
 
-MIT — [fieldtheory.dev/cli](https://fieldtheory.dev/cli)
-
-## Star History
-
-<a href="https://www.star-history.com/?repos=afar1%2Ffieldtheory-cli&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=afar1/fieldtheory-cli&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=afar1/fieldtheory-cli&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=afar1/fieldtheory-cli&type=date&legend=top-left" />
- </picture>
-</a>
+MIT — built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1).
