@@ -4,3 +4,5 @@ dist/
 .env
 .env.local
 dist-gui/
+release/
+build/icons/*.ico

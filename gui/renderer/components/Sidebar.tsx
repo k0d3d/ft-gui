@@ -1,4 +1,6 @@
 import React from 'react'
+
+declare const __APP_VERSION__: string
 import {
   LayoutDashboard,
   List,
@@ -54,9 +56,7 @@ export function Sidebar({ current, onNav }: Props) {
     >
       {/* Logo */}
       <div className="px-4 py-4 border-b border-white/[0.06]">
-        <span className="text-sm font-semibold tracking-wide text-lavender">
-          Field Theory
-        </span>
+        <span className="text-sm font-semibold tracking-wide text-lavender">FT GUI</span>
       </div>
 
       {/* Nav */}
@@ -86,6 +86,11 @@ export function Sidebar({ current, onNav }: Props) {
           </div>
         ))}
       </nav>
+
+      {/* Version */}
+      <div className="px-4 py-3 border-t border-white/[0.06]">
+        <span className="text-[10px] text-gray-700 select-none">v{__APP_VERSION__}</span>
+      </div>
     </aside>
   )
 }

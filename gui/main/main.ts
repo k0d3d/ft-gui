@@ -1,6 +1,26 @@
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'path'
+import { createRequire } from 'module'
 import { registerIpcHandlers } from './ipc-handlers.js'
+
+const require = createRequire(import.meta.url)
+const { version } = require('../../package.json') as { version: string }
+
+// Auto-updater — only active in packaged builds
+async function setupAutoUpdater(win: BrowserWindow) {
+  if (!app.isPackaged) return
+  try {
+    const { autoUpdater } = await import('electron-updater')
+    autoUpdater.autoDownload = true
+    autoUpdater.autoInstallOnAppQuit = true
+    autoUpdater.on('update-downloaded', (info) => {
+      win.webContents.send('app:update-ready', { version: info.version })
+    })
+    autoUpdater.checkForUpdatesAndNotify().catch(() => {})
+  } catch {
+    // not available outside packaged app
+  }
+}
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -8,6 +28,7 @@ function createWindow(): BrowserWindow {
     height: 800,
     minWidth: 900,
     minHeight: 600,
+    title: `FT GUI v${version}`,
     backgroundColor: '#0f0f10',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     webPreferences: {
@@ -62,7 +83,8 @@ if (!gotLock) {
   })
 
   app.whenReady().then(() => {
-    createWindow()
+    const win = createWindow()
+    setupAutoUpdater(win)
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()

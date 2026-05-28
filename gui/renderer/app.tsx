@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { DashboardScreen } from './screens/DashboardScreen'
 import { ListScreen } from './screens/ListScreen'
@@ -31,6 +31,17 @@ export type Screen =
 
 export function App() {
   const [screen, setScreen] = useState<Screen>('dashboard')
+  const [updateVersion, setUpdateVersion] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!window.ftApi) return
+    const handler = (data: unknown) => {
+      const { version } = data as { version: string }
+      setUpdateVersion(version)
+    }
+    const h = window.ftApi.on('app:update-ready', handler)
+    return () => window.ftApi.off('app:update-ready', h)
+  }, [])
 
   function nav(s: Screen) {
     setScreen(s)
@@ -60,11 +71,22 @@ export function App() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar current={currentName} onNav={(s) => nav(s as Screen)} />
-      <main className="flex-1 overflow-y-auto">
-        {renderScreen()}
-      </main>
+    <div className="flex flex-col h-screen overflow-hidden">
+      {updateVersion && (
+        <div className="flex items-center justify-center gap-3 px-4 py-1.5 bg-mint/10 border-b border-mint/20 text-xs text-mint">
+          v{updateVersion} is ready — restart to update
+          <button
+            onClick={() => setUpdateVersion(null)}
+            className="text-mint/50 hover:text-mint ml-2"
+          >✕</button>
+        </div>
+      )}
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar current={currentName} onNav={(s) => nav(s as Screen)} />
+        <main className="flex-1 overflow-y-auto">
+          {renderScreen()}
+        </main>
+      </div>
     </div>
   )
 }
