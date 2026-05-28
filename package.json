@@ -63,8 +63,8 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "afar1",
-      "repo": "fieldtheory-cli"
+      "owner": "k0d3d",
+      "repo": "ft-gui"
     },
     "linux": {
       "target": [

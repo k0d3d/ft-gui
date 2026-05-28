@@ -21,7 +21,7 @@
 
 ## Background and Context (read before writing)
 
-This post covers **FT GUI v2.0.0** — a major upgrade to the original [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1). The CLI remains fully intact and unchanged. v2.0.0 adds a full **Electron desktop GUI** alongside the existing terminal commands.
+This post covers **FT GUI v2.1.2** — built on top of the original [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1). The CLI remains fully intact and unchanged. The GUI adds a full Electron desktop app alongside the existing terminal commands.
 
 Key additions in v2.0.0:
 1. **Desktop app** (Electron) — all CLI commands become GUI screens. Available as AppImage, .deb, .dmg, .exe.
@@ -139,12 +139,12 @@ The app is built on top of the original fieldtheory-cli codebase with credit to 
 
 **Desktop app path:**
 ```bash
-# Download the AppImage (Linux), dmg (macOS), or exe (Windows) from GitHub Releases
+# Download from github.com/k0d3d/ft-gui/releases (AppImage, deb, dmg, exe)
 # Or build from source:
-git clone https://github.com/afar1/fieldtheory-cli
-cd fieldtheory-cli
+git clone https://github.com/k0d3d/ft-gui
+cd ft-gui
 pnpm install
-pnpm gui:pack    # builds AppImage + deb
+pnpm gui:pack    # builds FT-GUI.AppImage + FT-GUI.deb
 pnpm gui:start   # launch
 ```
 
@@ -293,7 +293,7 @@ Write each as its own subsection with a command example, what it does, and why i
 - No telemetry, no analytics, nothing phoned home
 - The GUI renderer runs with Electron context isolation — it has no direct Node.js access
 - OAuth tokens stored `chmod 600` (owner-only)
-- Fully open source: [github.com/afar1/fieldtheory-cli](https://github.com/afar1/fieldtheory-cli)
+- Fully open source: [github.com/k0d3d/ft-gui](https://github.com/k0d3d/ft-gui) (FT GUI) and [github.com/afar1/fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) (original CLI)
 
 ---
 
@@ -319,7 +319,8 @@ Write direct 2–4 sentence answers for each:
 - FT GUI gives you a local desktop app backed by a proven CLI — sync, search, classify, delete, and automate
 - Built on the original fieldtheory-cli (open source, MIT)
 - CTA: download the AppImage/deb/dmg/exe from GitHub Releases, or install the CLI via npm
-- Link to: https://github.com/afar1/fieldtheory-cli
+- Link to FT GUI repo: https://github.com/k0d3d/ft-gui
+- Also link original CLI: https://github.com/afar1/fieldtheory-cli
 
 ---
 

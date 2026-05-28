@@ -79,7 +79,7 @@ pnpm gui:pack:all    # + macOS dmg + Windows NSIS exe
 
 ### Auto-updates
 
-In packaged builds, the app checks [GitHub Releases](https://github.com/afar1/fieldtheory-cli/releases) on startup. When a new version is found, it downloads in the background. When the download completes, a dismissible banner appears at the top of the window:
+In packaged builds, the app checks [GitHub Releases](https://github.com/k0d3d/ft-gui/releases) on startup. When a new version is found, it downloads in the background. When the download completes, a dismissible banner appears at the top of the window:
 
 > *v2.x.x is ready — restart to update*
 

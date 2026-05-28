@@ -4,7 +4,7 @@ Twitter bookmarks are where good ideas go to die. You save a thread on distribut
 
 **FT GUI** turns that backlog into a local desktop application: a searchable, classifiable, deletable library that lives entirely on your machine. It's built on top of the excellent open-source [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1) — which we've extended with a full Electron desktop app, bulk delete from X, reset classification, and an interactive viz dashboard.
 
-Version 2.0.0. Free. Open source. Linux, macOS, and Windows.
+Version 2.1.2. Free. Open source. Linux, macOS, and Windows.
 
 ---
 
@@ -100,13 +100,13 @@ Nothing leaves your machine. The only outbound connections are to X's API during
 
 ### Desktop app
 
-Download the latest release from [GitHub Releases](https://github.com/afar1/fieldtheory-cli/releases) for your platform, or build from source:
+Download the latest release from [github.com/k0d3d/ft-gui/releases](https://github.com/k0d3d/ft-gui/releases) for your platform, or build from source:
 
 ```bash
-git clone https://github.com/afar1/fieldtheory-cli
-cd fieldtheory-cli
+git clone https://github.com/k0d3d/ft-gui
+cd ft-gui
 pnpm install
-pnpm gui:pack    # → release/FT GUI-2.0.0.AppImage + .deb
+pnpm gui:pack    # → release/FT-GUI.AppImage + FT-GUI.deb
 pnpm gui:start   # launch
 ```
 
@@ -297,7 +297,7 @@ Anytime a tool reads your browser cookies, you should be cautious. Here is the f
 
 **OAuth tokens** (if you use the API mode) are stored with `chmod 600` — owner-only permissions.
 
-**It's open source.** Every line of session extraction logic is auditable at [github.com/afar1/fieldtheory-cli](https://github.com/afar1/fieldtheory-cli). If you're security-conscious, read `src/chrome-cookies.ts` and `src/bookmark-delete.ts` before running.
+**It's open source.** Every line of session extraction and delete logic is auditable at [github.com/k0d3d/ft-gui](https://github.com/k0d3d/ft-gui) (GUI) and [github.com/afar1/fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) (original CLI). If you're security-conscious, read `src/chrome-cookies.ts` and `src/bookmark-delete.ts` before running.
 
 ---
 
@@ -333,10 +333,12 @@ Yes. It's fully open source under the MIT license. No subscription, no account, 
 
 Your X bookmarks are more valuable than the platform lets you treat them. Every time you hit Save, you're building a personal knowledge base — and X gives you a locked, unsearchable silo in return.
 
-FT GUI turns that into a local desktop library: synced automatically, searchable in milliseconds, classified by an LLM, and manageable as an actual inbox — with bulk delete so the queue never grows unbounded.
+FT GUI turns that into a local desktop library: synced automatically, searchable in milliseconds, classified by an LLM, and manageable as an actual inbox — with bulk delete so the queue never grows unbounded. And now with snapshots, you can checkpoint your library before any destructive operation and restore it in seconds.
 
 It's free, open source, and built on top of [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by @afar1. The CLI works exactly as it always has. The GUI is an addition, not a replacement.
 
-Download the latest release, or install the CLI with `npm install -g fieldtheory`. Star the repo if it's useful:
+Download the latest release from the FT GUI repo, or install the CLI with `npm install -g fieldtheory`. Star either repo if it's useful:
 
-**[github.com/afar1/fieldtheory-cli](https://github.com/afar1/fieldtheory-cli)**
+**[github.com/k0d3d/ft-gui](https://github.com/k0d3d/ft-gui)** — desktop app (AppImage, deb, dmg, exe)
+
+[github.com/afar1/fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) — original CLI by @afar1

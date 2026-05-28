@@ -2,7 +2,7 @@
 
 Self-custody for your X/Twitter bookmarks. Sync, search, classify, and explore locally — as a desktop app or a CLI.
 
-**v2.0.0** | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1) | MIT License | Linux · macOS · Windows
+**v2.1.2** | [github.com/k0d3d/ft-gui](https://github.com/k0d3d/ft-gui) | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1) | MIT License | Linux · macOS · Windows
 
 ---
 
@@ -21,8 +21,8 @@ Download the latest release for your platform:
 Or build from source:
 
 ```bash
-git clone https://github.com/afar1/fieldtheory-cli
-cd fieldtheory-cli
+git clone https://github.com/k0d3d/ft-gui
+cd ft-gui
 pnpm install
 pnpm gui:pack          # → release/FT GUI-2.0.0.AppImage + .deb
 pnpm gui:start         # run the built app
@@ -242,7 +242,7 @@ On Windows, use `fieldtheory` or `ft.cmd` instead of `ft` (PowerShell uses `ft` 
 - All network requests go only to X's API during sync.
 - OAuth tokens are stored `chmod 600` (owner-only).
 - The GUI runs with context isolation — the renderer has no Node.js access.
-- Fully open source — audit every line at [github.com/afar1/fieldtheory-cli](https://github.com/afar1/fieldtheory-cli).
+- Fully open source — [github.com/k0d3d/ft-gui](https://github.com/k0d3d/ft-gui) (GUI) · [github.com/afar1/fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) (original CLI).
 
 ---
 
