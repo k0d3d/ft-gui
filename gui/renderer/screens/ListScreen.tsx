@@ -1,6 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { invoke } from '../hooks/useIpc'
-import type { BookmarkTimelineItem, BookmarkTimelineFilters } from '../../main/ipc-types'
+import { invoke, useIpcEvent } from '../hooks/useIpc'
+import type {
+  BookmarkTimelineItem,
+  BookmarkTimelineFilters,
+  DeleteDoneEvent,
+  DeleteErrorEvent,
+  DeleteProgressEvent,
+} from '../../main/ipc-types'
 import type { Screen } from '../app'
 import { Search, Trash2, RotateCcw } from 'lucide-react'
 
@@ -19,6 +25,8 @@ export function ListScreen({ onNav }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [selectMode, setSelectMode] = useState(false)
   const [actionMsg, setActionMsg] = useState('')
+  const [deleteJobId, setDeleteJobId] = useState<string | null>(null)
+  const [deleteRunning, setDeleteRunning] = useState(false)
 
   const load = useCallback(async (f: BookmarkTimelineFilters) => {
     setLoading(true)
@@ -37,6 +45,35 @@ export function ListScreen({ onNav }: Props) {
   useEffect(() => {
     load(filters)
   }, [filters, load])
+
+  useIpcEvent('delete:progress', (p) => {
+    const data = p as DeleteProgressEvent
+    if (data.jobId === deleteJobId || (deleteJobId === null && deleteRunning)) {
+      if (deleteJobId === null) setDeleteJobId(data.jobId)
+      setActionMsg(`Removing ${data.done} / ${data.total} from X…`)
+    }
+  }, [deleteJobId, deleteRunning])
+
+  useIpcEvent('delete:done', (p) => {
+    const data = p as DeleteDoneEvent
+    if (data.jobId === deleteJobId || (deleteJobId === null && deleteRunning)) {
+      if (deleteJobId === null) setDeleteJobId(data.jobId)
+      setDeleteRunning(false)
+      setSelected(new Set())
+      setActionMsg(`Removed ${data.deleted} from X${data.errors ? ` (${data.errors} failed)` : ''}`)
+      setTimeout(() => setActionMsg(''), 4000)
+    }
+  }, [deleteJobId, deleteRunning])
+
+  useIpcEvent('delete:error', (p) => {
+    const data = p as DeleteErrorEvent
+    if (data.jobId === deleteJobId || (deleteJobId === null && deleteRunning)) {
+      if (deleteJobId === null) setDeleteJobId(data.jobId)
+      setDeleteRunning(false)
+      setActionMsg(data.error)
+      setTimeout(() => setActionMsg(''), 4000)
+    }
+  }, [deleteJobId, deleteRunning])
 
   function goPage(p: number) {
     setPage(p)
@@ -75,11 +112,17 @@ export function ListScreen({ onNav }: Props) {
     const tweetIds = bookmarks
       .filter((b) => selected.has(b.id))
       .map((b) => b.tweetId)
-    setActionMsg(`Removing ${tweetIds.length} bookmark${tweetIds.length > 1 ? 's' : ''} from X…`)
-    const result = await invoke<{ deleted: number; errors: string[] }>('bookmarks:bulkDeleteFromX', tweetIds)
-    setActionMsg(`Removed ${result.deleted} from X${result.errors.length ? ` (${result.errors.length} failed)` : ''}`)
-    setSelected(new Set())
-    setTimeout(() => setActionMsg(''), 4000)
+    setDeleteRunning(true)
+    setDeleteJobId(null)
+    setActionMsg(`Starting removal for ${tweetIds.length} bookmark${tweetIds.length > 1 ? 's' : ''}…`)
+    try {
+      const result = await invoke<{ jobId: string }>('bookmarks:bulkDeleteFromX:start', { tweetIds })
+      setDeleteJobId(result.jobId)
+    } catch (e: unknown) {
+      setDeleteRunning(false)
+      setActionMsg((e as Error).message)
+      setTimeout(() => setActionMsg(''), 4000)
+    }
   }
 
   const totalPages = Math.ceil(total / PAGE_SIZE)
@@ -98,13 +141,15 @@ export function ListScreen({ onNav }: Props) {
           <>
             <button
               onClick={resetSelected}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-periwinkle/20 text-periwinkle hover:bg-periwinkle/30 transition-colors"
+              disabled={deleteRunning}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-periwinkle/20 text-periwinkle hover:bg-periwinkle/30 disabled:opacity-40 transition-colors"
             >
               <RotateCcw size={12} /> Reset classification ({selected.size})
             </button>
             <button
               onClick={deleteFromX}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-coral/20 text-coral hover:bg-coral/30 transition-colors"
+              disabled={deleteRunning}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-coral/20 text-coral hover:bg-coral/30 disabled:opacity-40 transition-colors"
             >
               <Trash2 size={12} /> Remove from X ({selected.size})
             </button>
@@ -112,6 +157,7 @@ export function ListScreen({ onNav }: Props) {
         )}
         <button
           onClick={() => { setSelectMode(!selectMode); setSelected(new Set()) }}
+          disabled={deleteRunning}
           className={`px-3 py-1.5 rounded text-xs transition-colors ${selectMode ? 'bg-white/10 text-gray-200' : 'bg-white/[0.04] text-gray-500 hover:text-gray-300'}`}
         >
           {selectMode ? 'Cancel' : 'Select'}

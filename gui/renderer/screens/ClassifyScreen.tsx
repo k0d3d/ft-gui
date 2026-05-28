@@ -20,21 +20,31 @@ export function ClassifyScreen() {
 
   useIpcEvent('classify:progress', (p) => {
     const data = p as ClassifyProgress
-    if (data.jobId === jobId) setProgress(data)
-  }, [jobId])
+    if (data.jobId === jobId || (jobId === null && running)) {
+      if (jobId === null) setJobId(data.jobId)
+      setProgress(data)
+    }
+  }, [jobId, running])
 
   useIpcEvent('classify:done', (p) => {
     const data = p as { jobId: string }
-    if (data.jobId === jobId) { setDone(true); setRunning(false) }
-  }, [jobId])
+    if (data.jobId === jobId || (jobId === null && running)) {
+      if (jobId === null) setJobId(data.jobId)
+      setDone(true); setRunning(false)
+    }
+  }, [jobId, running])
 
   useIpcEvent('classify:error', (p) => {
     const data = p as { jobId: string; error: string }
-    if (data.jobId === jobId) { setError(data.error); setRunning(false) }
-  }, [jobId])
+    if (data.jobId === jobId || (jobId === null && running)) {
+      if (jobId === null) setJobId(data.jobId)
+      setError(data.error); setRunning(false)
+    }
+  }, [jobId, running])
 
   async function startClassify() {
     setRunning(true)
+    setJobId(null)
     setProgress(null)
     setDone(false)
     setError(null)

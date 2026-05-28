@@ -38,6 +38,17 @@ export interface DeleteProgressEvent {
   total: number
 }
 
+export interface DeleteDoneEvent {
+  jobId: string
+  deleted: number
+  errors: number
+}
+
+export interface DeleteErrorEvent {
+  jobId: string
+  error: string
+}
+
 export interface MediaProgressEvent {
   jobId: string
   done: number
@@ -67,7 +78,7 @@ export interface IpcChannels {
   'bookmarks:search': [opts: SearchOptions, result: SearchResult[]]
   'bookmarks:get': [id: string, result: BookmarkTimelineItem | null]
   'bookmarks:resetClassification': [ids: string[], result: { count: number }]
-  'bookmarks:bulkDeleteFromX': [tweetIds: string[], result: { deleted: number; errors: string[] }]
+  'bookmarks:bulkDeleteFromX:start': [opts: { tweetIds?: string[] } | undefined, result: { jobId: string }]
   'stats:get': [
     filters: undefined,
     result: {

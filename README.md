@@ -2,7 +2,7 @@
 
 Self-custody for your X/Twitter bookmarks. Sync, search, classify, and explore locally — as a desktop app or a CLI.
 
-**v2.1.2** | [github.com/k0d3d/ft-gui](https://github.com/k0d3d/ft-gui) | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1) | MIT License | Linux · macOS · Windows
+**v2.1.5** | [github.com/k0d3d/ft-gui](https://github.com/k0d3d/ft-gui) | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1) | MIT License | Linux · macOS · Windows
 
 ---
 
@@ -24,7 +24,7 @@ Or build from source:
 git clone https://github.com/k0d3d/ft-gui
 cd ft-gui
 pnpm install
-pnpm gui:pack          # → release/FT GUI-2.0.0.AppImage + .deb
+pnpm gui:pack          # → release/FT-GUI.AppImage + .deb
 pnpm gui:start         # run the built app
 ```
 

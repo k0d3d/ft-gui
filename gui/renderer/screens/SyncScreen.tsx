@@ -30,21 +30,31 @@ export function SyncScreen() {
 
   useIpcEvent('sync:progress', (p) => {
     const data = p as SyncProgress
-    if (data.jobId === jobId) setProgress(data)
-  }, [jobId])
+    if (data.jobId === jobId || (jobId === null && running)) {
+      if (jobId === null) setJobId(data.jobId)
+      setProgress(data)
+    }
+  }, [jobId, running])
 
   useIpcEvent('sync:done', (p) => {
     const data = p as SyncDone
-    if (data.jobId === jobId) { setDone(data); setRunning(false) }
-  }, [jobId])
+    if (data.jobId === jobId || (jobId === null && running)) {
+      if (jobId === null) setJobId(data.jobId)
+      setDone(data); setRunning(false)
+    }
+  }, [jobId, running])
 
   useIpcEvent('sync:error', (p) => {
     const data = p as { jobId: string; error: string }
-    if (data.jobId === jobId) { setError(data.error); setRunning(false) }
-  }, [jobId])
+    if (data.jobId === jobId || (jobId === null && running)) {
+      if (jobId === null) setJobId(data.jobId)
+      setError(data.error); setRunning(false)
+    }
+  }, [jobId, running])
 
   async function startSync() {
     setRunning(true)
+    setJobId(null)
     setProgress(null)
     setDone(null)
     setError(null)

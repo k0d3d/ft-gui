@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { invoke } from '../hooks/useIpc'
-import type { BookmarkStatusView, Screen } from '../app'
+import type { BookmarkStatusView } from '../../main/ipc-types'
+import type { Screen } from '../app'
 
 interface Props {
   onNav: (s: Screen) => void
@@ -107,13 +108,19 @@ function Metric({
   accent: string
   onClick?: () => void
 }) {
+  const accentClass = {
+    lavender: 'text-lavender',
+    periwinkle: 'text-periwinkle',
+    mint: 'text-mint',
+  }[accent] ?? 'text-gray-100'
+
   return (
     <button
       onClick={onClick}
       className="text-left p-5 rounded-lg bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.07] transition-colors"
     >
       <p className="text-xs text-gray-500 mb-1">{label}</p>
-      <p className={`text-3xl font-bold text-${accent} mb-1`}>{value}</p>
+      <p className={`text-3xl font-bold ${accentClass} mb-1`}>{value}</p>
       <p className="text-xs text-gray-600">{sub}</p>
     </button>
   )

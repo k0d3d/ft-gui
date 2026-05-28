@@ -4,6 +4,7 @@ import { loadChromeSessionConfig } from './config.js';
 import { extractChromeXCookies } from './chrome-cookies.js';
 import { extractFirefoxXCookies, detectFirefoxProfileDir } from './firefox-cookies.js';
 import { listBrowserIds, getBrowser, browserUserDataDir, listInstalledBrowsers } from './browsers.js';
+import type { BrowserDef } from './browsers.js';
 import { parseTimestampMs } from './date-utils.js';
 import type { BookmarkBackfillState, BookmarkCacheMeta, BookmarkFolder, BookmarkRecord, QuotedTweetSnapshot } from './types.js';
 import { exportBookmarksForSyncSeed, updateQuotedTweets, updateBookmarkText, updateArticleContent } from './bookmarks-db.js';

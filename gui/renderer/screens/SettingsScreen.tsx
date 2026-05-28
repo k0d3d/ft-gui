@@ -101,8 +101,31 @@ export function SettingsScreen() {
 
   useIpcEvent('delete:progress', (p) => {
     const data = p as { jobId: string; done: number; total: number }
-    if (data.jobId === jobId) setRemoveProgress({ done: data.done, total: data.total })
-  }, [jobId])
+    if (data.jobId === jobId || (jobId === null && removing)) {
+      if (jobId === null) setJobId(data.jobId)
+      setRemoveProgress({ done: data.done, total: data.total })
+    }
+  }, [jobId, removing])
+
+  useIpcEvent('delete:done', (p) => {
+    const data = p as { jobId: string; deleted: number; errors: number }
+    if (data.jobId === jobId || (jobId === null && removing)) {
+      if (jobId === null) setJobId(data.jobId)
+      setRemoveResult({ deleted: data.deleted, errors: data.errors })
+      setRemoving(false)
+      setConfirmed(false)
+    }
+  }, [jobId, removing])
+
+  useIpcEvent('delete:error', (p) => {
+    const data = p as { jobId: string; error: string }
+    if (data.jobId === jobId || (jobId === null && removing)) {
+      if (jobId === null) setJobId(data.jobId)
+      setRemoveError(data.error)
+      setRemoving(false)
+      setConfirmed(false)
+    }
+  }, [jobId, removing])
 
   async function rebuildIndex(force: boolean) {
     setIndexing(true)
@@ -122,21 +145,13 @@ export function SettingsScreen() {
     setRemoveProgress(null)
     setRemoveResult(null)
     setRemoveError(null)
+    setJobId(null)
 
     try {
-      const tweetIds = await invoke<string[]>('bookmarks:allTweetIds')
-      if (!tweetIds.length) {
-        setRemoveError('No bookmarks found in the local library.')
-        setRemoving(false)
-        return
-      }
-
-      // Start job — progress streams via delete:progress event
-      const result = await invoke<{ deleted: number; errors: string[] }>('bookmarks:bulkDeleteFromX', tweetIds)
-      setRemoveResult({ deleted: result.deleted, errors: result.errors.length })
+      const result = await invoke<{ jobId: string }>('bookmarks:bulkDeleteFromX:start')
+      setJobId(result.jobId)
     } catch (e: unknown) {
       setRemoveError((e as Error).message)
-    } finally {
       setRemoving(false)
       setConfirmed(false)
     }

@@ -2,6 +2,26 @@
 
 ---
 
+## v2.1.5 — GUI Delete Flow Hardening
+
+**Released:** 2026-05-28
+
+This patch closes several gaps in the Electron GUI around long-running jobs and bookmark deletion.
+
+### What changed
+
+- **Browse → Remove from X** now uses the same background job flow as Settings, so selected-item deletes work again and show live progress instead of relying on a stale synchronous IPC path.
+- **Settings → Remove all bookmarks from X** keeps tracking progress even if the first IPC event arrives before the renderer stores the returned `jobId`.
+- **Sync, Classify, and Media** now use the same defensive job-handshake pattern, reducing the chance of a fast start/error event leaving the screen stuck without progress.
+- **Dashboard** now imports its status type from the IPC type layer directly and uses Tailwind-safe accent classes, avoiding renderer build drift.
+
+### Verification
+
+- `node --import tsx --test tests/delete-job.test.ts`
+- `npx tsc -p tsconfig.gui.json --noEmit`
+
+---
+
 ## v2.1.2 — Snapshots & Bulk Remove
 
 **Released:** 2026-05-28

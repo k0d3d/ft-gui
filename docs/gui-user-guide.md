@@ -1,6 +1,6 @@
 # FT GUI — User Guide
 
-**FT GUI v2.0.0** | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by @afar1
+**FT GUI v2.1.5** | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by @afar1
 
 ---
 
@@ -42,7 +42,7 @@ Full paginated list of your bookmark library (30 per page).
 **Select mode** — click "Select" in the toolbar to enter multi-select. Check individual rows or use "Select all on page." With items selected, two bulk actions appear:
 
 - **Reset classification** — clears categories and domains for selected bookmarks so the next classify run re-processes them
-- **Remove from X** — un-bookmarks selected items from your X account; your local copy is kept
+- **Remove from X** — un-bookmarks selected items from your X account; your local copy is kept; progress is shown inline while the job runs
 
 Click any row (outside select mode) to open the Bookmark Detail screen.
 
@@ -127,7 +127,7 @@ When you click **Remove from X** (Browse multi-select or Sync option), the app:
 
 1. Detects your active browser session (same as Sync — Chrome, Firefox, Brave, or Edge)
 2. Sends a `DeleteBookmark` GraphQL mutation to X for each selected tweet, with a 250 ms delay between requests
-3. Reports how many succeeded and how many failed
+3. Streams progress in the GUI and reports how many succeeded and how many failed at the end
 
 **Your local copy is never touched.** The bookmark stays in `bookmarks.jsonl` and the SQLite index. Only your X bookmark list is updated.
 

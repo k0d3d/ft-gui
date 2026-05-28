@@ -12,21 +12,31 @@ export function MediaScreen() {
 
   useIpcEvent('media:progress', (p) => {
     const data = p as { jobId: string; done: number; total: number; downloaded: number }
-    if (data.jobId === jobId) setProgress(data)
-  }, [jobId])
+    if (data.jobId === jobId || (jobId === null && running)) {
+      if (jobId === null) setJobId(data.jobId)
+      setProgress(data)
+    }
+  }, [jobId, running])
 
   useIpcEvent('media:done', (p) => {
     const data = p as { jobId: string }
-    if (data.jobId === jobId) { setDone(true); setRunning(false) }
-  }, [jobId])
+    if (data.jobId === jobId || (jobId === null && running)) {
+      if (jobId === null) setJobId(data.jobId)
+      setDone(true); setRunning(false)
+    }
+  }, [jobId, running])
 
   useIpcEvent('media:error', (p) => {
     const data = p as { jobId: string; error: string }
-    if (data.jobId === jobId) { setError(data.error); setRunning(false) }
-  }, [jobId])
+    if (data.jobId === jobId || (jobId === null && running)) {
+      if (jobId === null) setJobId(data.jobId)
+      setError(data.error); setRunning(false)
+    }
+  }, [jobId, running])
 
   async function start() {
     setRunning(true)
+    setJobId(null)
     setProgress(null)
     setDone(false)
     setError(null)
