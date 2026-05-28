@@ -1356,3 +1356,77 @@ export async function snapshotBookmarks(label?: string): Promise<SnapshotResult>
     timestamp: manifest.timestamp,
   };
 }
+
+export interface SnapshotInfo {
+  snapshotPath: string;
+  timestamp: string;
+  label: string | null;
+  recordCount: number;
+}
+
+export function listSnapshots(): SnapshotInfo[] {
+  const snapshotsDir = path.join(dataDir(), 'snapshots');
+  if (!fs.existsSync(snapshotsDir)) return [];
+
+  const results: SnapshotInfo[] = [];
+  for (const name of fs.readdirSync(snapshotsDir)) {
+    const snapshotPath = path.join(snapshotsDir, name);
+    const manifestPath = path.join(snapshotPath, 'manifest.json');
+    if (!fs.existsSync(manifestPath)) continue;
+    try {
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+      results.push({
+        snapshotPath,
+        timestamp: manifest.timestamp ?? name,
+        label: manifest.label ?? null,
+        recordCount: manifest.recordCount ?? 0,
+      });
+    } catch {
+      // skip malformed
+    }
+  }
+  // newest first
+  return results.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+}
+
+export async function restoreSnapshot(snapshotPath: string): Promise<{ recordCount: number }> {
+  const jsonlSrc = path.join(snapshotPath, 'bookmarks.jsonl');
+  const sqlSrc   = path.join(snapshotPath, 'bookmarks.sql');
+
+  if (!fs.existsSync(jsonlSrc)) throw new Error(`bookmarks.jsonl not found in snapshot: ${snapshotPath}`);
+  if (!fs.existsSync(sqlSrc))   throw new Error(`bookmarks.sql not found in snapshot: ${snapshotPath}`);
+
+  // 1. Restore JSONL (source of truth)
+  const destJsonl = twitterBookmarksCachePath();
+  fs.copyFileSync(jsonlSrc, destJsonl);
+
+  // 2. Restore DB from SQL dump — execute every statement against a fresh database
+  const dbPath = twitterBookmarksIndexPath();
+  const db = await openDb(dbPath);
+  try {
+    // Wipe existing tables
+    db.run('DROP TABLE IF EXISTS bookmarks_fts');
+    db.run('DROP TABLE IF EXISTS bookmarks');
+    db.run('DROP TABLE IF EXISTS meta');
+
+    // Execute the SQL dump
+    const sql = fs.readFileSync(sqlSrc, 'utf8');
+    db.run(sql);
+
+    // Rebuild FTS from restored content
+    db.run(`CREATE VIRTUAL TABLE IF NOT EXISTS bookmarks_fts USING fts5(
+      text, author_handle, author_name, article_text,
+      content=bookmarks, content_rowid=rowid,
+      tokenize='porter unicode61'
+    )`);
+    db.run("INSERT INTO bookmarks_fts(bookmarks_fts) VALUES('rebuild')");
+
+    const totalRow = db.exec('SELECT COUNT(*) FROM bookmarks')[0]?.values[0]?.[0];
+    const recordCount = Number(totalRow ?? 0);
+
+    saveDb(db, dbPath);
+    return { recordCount };
+  } finally {
+    db.close();
+  }
+}

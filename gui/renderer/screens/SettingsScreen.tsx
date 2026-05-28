@@ -1,12 +1,19 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { invoke, useIpcEvent } from '../hooks/useIpc'
-import { CheckCircle, Trash2, AlertTriangle, Camera } from 'lucide-react'
+import { CheckCircle, Trash2, AlertTriangle, Camera, RotateCcw, RefreshCw } from 'lucide-react'
 
 interface SnapshotResult {
   snapshotPath: string
   recordCount: number
   sizeBytes: number
   timestamp: string
+}
+
+interface SnapshotInfo {
+  snapshotPath: string
+  timestamp: string
+  label: string | null
+  recordCount: number
 }
 
 export function SettingsScreen() {
@@ -19,6 +26,26 @@ export function SettingsScreen() {
   const [snapshotLabel, setSnapshotLabel] = useState('')
   const [snapshotting, setSnapshotting] = useState(false)
   const [snapshotResult, setSnapshotResult] = useState<SnapshotResult | null>(null)
+
+  // Load snapshot state
+  const [snapshots, setSnapshots] = useState<SnapshotInfo[]>([])
+  const [snapshotsLoading, setSnapshotsLoading] = useState(false)
+  const [restoring, setRestoring] = useState<string | null>(null) // path being restored
+  const [restoreResult, setRestoreResult] = useState<{ path: string; count: number } | null>(null)
+  const [restoreError, setRestoreError] = useState<string | null>(null)
+  const [confirmRestore, setConfirmRestore] = useState<string | null>(null) // path awaiting confirm
+
+  const loadSnapshots = useCallback(async () => {
+    setSnapshotsLoading(true)
+    try {
+      const list = await invoke<SnapshotInfo[]>('bookmarks:listSnapshots')
+      setSnapshots(list)
+    } finally {
+      setSnapshotsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { loadSnapshots() }, [loadSnapshots])
 
   // Remove-all state
   const [confirmed, setConfirmed] = useState(false)
@@ -161,6 +188,122 @@ export function SettingsScreen() {
               </p>
               <p className="text-gray-500 font-mono break-all">{snapshotResult.snapshotPath}</p>
             </div>
+          </div>
+        )}
+      </Section>
+
+      {/* Load snapshot */}
+      <Section title="Load snapshot">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm text-gray-500">Restore your library from a previous snapshot.</p>
+          <button
+            onClick={loadSnapshots}
+            disabled={snapshotsLoading}
+            className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-300 transition-colors"
+          >
+            <RefreshCw size={11} className={snapshotsLoading ? 'animate-spin' : ''} />
+            Refresh
+          </button>
+        </div>
+
+        {snapshots.length === 0 && !snapshotsLoading && (
+          <p className="text-xs text-gray-600">No snapshots yet — take one above first.</p>
+        )}
+
+        <div className="space-y-2">
+          {snapshots.map((s) => {
+            const isConfirming = confirmRestore === s.snapshotPath
+            const isRestoring  = restoring === s.snapshotPath
+            const ts = new Date(s.timestamp)
+            const dateStr = ts.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+            const timeStr = ts.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+
+            return (
+              <div
+                key={s.snapshotPath}
+                className={`p-3 rounded-lg border transition-colors ${
+                  isConfirming
+                    ? 'bg-amber/5 border-amber/30'
+                    : 'bg-white/[0.03] border-white/[0.06]'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-xs text-gray-300 font-medium">
+                        {dateStr} {timeStr}
+                      </span>
+                      {s.label && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-lavender/15 text-lavender">
+                          {s.label}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-600">
+                      {s.recordCount.toLocaleString()} bookmarks
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {isConfirming ? (
+                      <>
+                        <span className="text-xs text-amber">Overwrite current library?</span>
+                        <button
+                          onClick={async () => {
+                            setRestoring(s.snapshotPath)
+                            setConfirmRestore(null)
+                            setRestoreResult(null)
+                            setRestoreError(null)
+                            try {
+                              const r = await invoke<{ recordCount: number }>('bookmarks:restoreSnapshot', s.snapshotPath)
+                              setRestoreResult({ path: s.snapshotPath, count: r.recordCount })
+                              invoke<number>('bookmarks:count', {}).then(setTotal)
+                            } catch (e: unknown) {
+                              setRestoreError((e as Error).message)
+                            } finally {
+                              setRestoring(null)
+                            }
+                          }}
+                          className="px-2.5 py-1 rounded text-xs bg-amber/20 text-amber hover:bg-amber/30 transition-colors"
+                        >
+                          Yes, restore
+                        </button>
+                        <button
+                          onClick={() => setConfirmRestore(null)}
+                          className="px-2.5 py-1 rounded text-xs bg-white/[0.06] text-gray-400 hover:bg-white/[0.1] transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmRestore(s.snapshotPath)}
+                        disabled={isRestoring || !!restoring}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-white/[0.06] text-gray-300 hover:bg-white/[0.1] disabled:opacity-30 transition-colors"
+                      >
+                        <RotateCcw size={11} />
+                        {isRestoring ? 'Restoring…' : 'Restore'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {restoreResult && (
+          <div className="flex items-start gap-2 mt-3 p-3 rounded-lg bg-mint/10 border border-mint/20">
+            <CheckCircle size={14} className="text-mint mt-0.5 shrink-0" />
+            <p className="text-xs text-gray-200">
+              Restored {restoreResult.count.toLocaleString()} bookmarks — library is up to date.
+            </p>
+          </div>
+        )}
+        {restoreError && (
+          <div className="flex items-start gap-2 mt-3 p-3 rounded-lg bg-coral/10 border border-coral/20">
+            <AlertTriangle size={14} className="text-coral mt-0.5 shrink-0" />
+            <p className="text-xs text-gray-300">{restoreError}</p>
           </div>
         )}
       </Section>
