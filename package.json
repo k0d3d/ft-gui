@@ -1,6 +1,6 @@
 {
   "name": "fieldtheory",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Field Theory CLI. Self-custody for your X/Twitter bookmarks. Local sync, full-text search, classification, and terminal dashboards.",
   "type": "module",
   "bin": {
@@ -68,8 +68,18 @@
     },
     "linux": {
       "target": [
-        { "target": "AppImage", "arch": ["x64"] },
-        { "target": "deb",      "arch": ["x64"] }
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "build/icons",
       "category": "Utility",
@@ -82,18 +92,38 @@
       }
     },
     "deb": {
-      "depends": ["libgtk-3-0", "libnss3", "libxss1", "libgbm1"]
+      "depends": [
+        "libgtk-3-0",
+        "libnss3",
+        "libxss1",
+        "libgbm1"
+      ]
     },
     "appImage": {
       "license": "LICENSE"
     },
     "mac": {
-      "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }],
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
       "icon": "build/icons/icon.icns",
       "category": "public.app-category.utilities"
     },
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "build/icons/icon.ico"
     },
     "nsis": {
