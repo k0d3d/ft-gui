@@ -7,8 +7,11 @@ test('startDeleteBookmarksJob emits progress and done with one stable jobId', as
 
   const { jobId, finished } = startDeleteBookmarksJob({
     randomUUID: () => 'job-123',
-    getAllTweetIds: async () => ['1', '2'],
     detectValidSessions: async () => [{ csrfToken: 'ct0', cookieHeader: 'ct0=abc' }],
+    getCurrentBookmarkTweetIds: async (session) => {
+      assert.equal(session.csrfToken, 'ct0');
+      return ['1', '2'];
+    },
     deleteXBookmarks: async (tweetIds, session, onProgress) => {
       assert.deepEqual(tweetIds, ['1', '2']);
       assert.equal(session.csrfToken, 'ct0');
@@ -38,8 +41,8 @@ test('startDeleteBookmarksJob emits delete:error when no browser session is avai
 
   const { finished } = startDeleteBookmarksJob({
     randomUUID: () => 'job-err',
-    getAllTweetIds: async () => ['1'],
     detectValidSessions: async () => [],
+    getCurrentBookmarkTweetIds: async () => ['1'],
     deleteXBookmarks: async () => ({ deleted: 0, errors: [] }),
     emit: (channel, payload) => {
       events.push({ channel, payload });
@@ -88,4 +91,33 @@ test('startDeleteBookmarksJob uses explicit tweet ids without loading the full l
     channel: 'delete:done',
     payload: { jobId: 'job-explicit', deleted: 2, errors: 0 },
   });
+});
+
+test('startDeleteBookmarksJob loads live bookmark ids when tweet ids are not provided', async () => {
+  let localLoadCalls = 0;
+  let liveLoadCalls = 0;
+
+  const { finished } = startDeleteBookmarksJob({
+    randomUUID: () => 'job-live',
+    getAllTweetIds: async () => {
+      localLoadCalls++;
+      return ['stale-local-id'];
+    },
+    getCurrentBookmarkTweetIds: async (session) => {
+      liveLoadCalls++;
+      assert.equal(session.csrfToken, 'ct0');
+      return ['live-1', 'live-2'];
+    },
+    detectValidSessions: async () => [{ csrfToken: 'ct0', cookieHeader: 'ct0=abc' }],
+    deleteXBookmarks: async (tweetIds) => {
+      assert.deepEqual(tweetIds, ['live-1', 'live-2']);
+      return { deleted: 2, errors: [] };
+    },
+    emit: () => {},
+  });
+
+  await finished;
+
+  assert.equal(localLoadCalls, 0);
+  assert.equal(liveLoadCalls, 1);
 });

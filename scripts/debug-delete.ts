@@ -4,18 +4,21 @@
  * What it does:
  *   1. Detects your browser session (same mechanism as ft sync)
  *   2. Verifies the session is alive (hits the bookmarks GraphQL endpoint)
- *   3. Probes the DeleteBookmark mutation with the first tweet in your local DB
+ *   3. Loads the latest live bookmark IDs from X
+ *   4. Probes the DeleteBookmark mutation with the latest live bookmark
  *   4. Reports whether the query ID is still valid and what X returned
  *
- * If the probe succeeds, pass --all to run the full bulk delete.
+ * If the probe succeeds, pass --all to run the full bulk delete or
+ * `--count <n>` to delete only the latest n bookmarks.
  *
  * Usage:
- *   pnpm exec tsx scripts/debug-delete.ts          # probe only (safe)
- *   pnpm exec tsx scripts/debug-delete.ts --all    # probe + full bulk delete
+ *   pnpm exec tsx scripts/debug-delete.ts             # probe only (safe)
+ *   pnpm exec tsx scripts/debug-delete.ts --count 100 # probe + latest 100
+ *   pnpm exec tsx scripts/debug-delete.ts --all       # probe + full bulk delete
  */
 
 import { detectValidSessions } from '../src/graphql-bookmarks.js';
-import { getAllTweetIds } from '../src/bookmarks-db.js';
+import { deleteXBookmarks, getCurrentBookmarkTweetIds } from '../src/bookmark-delete.js';
 
 const X_PUBLIC_BEARER =
   'AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA';
@@ -100,14 +103,14 @@ const verifyJson = await verifyRes.json() as any;
 const timelineEntries = verifyJson?.data?.bookmark_timeline_v2?.timeline?.instructions?.[0]?.entries ?? [];
 console.log(`✓  Session valid — ${timelineEntries.length} entry/entries returned from bookmarks endpoint`);
 
-// ── 3. Load local tweet IDs ───────────────────────────────────────────────────
+// ── 3. Load live bookmark IDs ─────────────────────────────────────────────────
 
-console.log('\n[3] Loading local tweet IDs…');
-const allIds = await getAllTweetIds();
-console.log(`✓  ${allIds.length.toLocaleString()} bookmarks in local library`);
+console.log('\n[3] Loading live bookmark IDs…');
+const allIds = await getCurrentBookmarkTweetIds(session);
+console.log(`✓  ${allIds.length.toLocaleString()} live bookmarks currently on X`);
 
 if (!allIds.length) {
-  console.error('❌  No bookmarks found locally. Run ft sync first.');
+  console.error('❌  No live bookmarks found on X.');
   process.exit(1);
 }
 
@@ -139,7 +142,7 @@ for (const qid of CANDIDATE_QUERY_IDS) {
   const displayBody = JSON.stringify(parsed ?? lastBody, null, 2).slice(0, 400);
   console.log(`   → HTTP ${res.status}  body: ${displayBody}`);
 
-  if (res.ok) {
+  if (res.ok && parsed?.data?.tweet_bookmark_delete === 'Done' && !parsed?.errors?.length) {
     workingQueryId = qid;
     break;
   }
@@ -159,11 +162,13 @@ if (workingQueryId) {
     console.log(`   ⚠  queryId differs from hardcoded value — update DELETE_BOOKMARK_QUERY_ID`);
     console.log(`      in src/bookmark-delete.ts to: ${workingQueryId}`);
   }
-  console.log(`   note    : probe tweet ${PROBE_ID} was removed from X (still in local library)`);
+  console.log(`   note    : probe tweet ${PROBE_ID} was removed from X`);
   console.log();
-  if (!process.argv.includes('--all')) {
-    console.log(`   To run the full bulk delete on all ${allIds.length.toLocaleString()} bookmarks:`);
+  if (!process.argv.includes('--all') && parseCountArg(process.argv) == null) {
+    console.log(`   To run the full bulk delete on all ${allIds.length.toLocaleString()} live bookmarks:`);
     console.log(`   pnpm exec tsx scripts/debug-delete.ts --all`);
+    console.log(`   Or delete only the latest N bookmarks:`);
+    console.log(`   pnpm exec tsx scripts/debug-delete.ts --count 100`);
   }
 } else {
   console.log(`❌  DeleteBookmark failed with all candidate query IDs`);
@@ -179,12 +184,16 @@ if (workingQueryId) {
   process.exit(1);
 }
 
-// ── 6. Full bulk run (--all flag) ─────────────────────────────────────────────
+// ── 6. Bulk run (--all / --count) ─────────────────────────────────────────────
 
-if (process.argv.includes('--all') && workingQueryId) {
-  const { deleteXBookmarks } = await import('../src/bookmark-delete.js');
-  const remaining = allIds.slice(1); // probe already deleted allIds[0]
-  console.log(`[6] Bulk deleting remaining ${remaining.length.toLocaleString()} bookmarks…`);
+const countArg = parseCountArg(process.argv);
+if ((process.argv.includes('--all') || countArg != null) && workingQueryId) {
+  const targetCount = process.argv.includes('--all')
+    ? allIds.length
+    : Math.max(1, Math.min(countArg!, allIds.length));
+  const targetIds = allIds.slice(0, targetCount);
+  const remaining = targetIds.slice(1); // probe already deleted targetIds[0]
+  console.log(`[6] Bulk deleting remaining ${remaining.length.toLocaleString()} live bookmarks…`);
   console.log('    Rate-limited to 250 ms per request. Estimated time:',
     `${Math.ceil((remaining.length * 0.25) / 60).toFixed(0)} min`);
   console.log();
@@ -204,4 +213,15 @@ if (process.argv.includes('--all') && workingQueryId) {
   if (result.errors.length) {
     console.log(`   Failed IDs: ${result.errors.slice(0, 5).join(', ')}${result.errors.length > 5 ? ` …+${result.errors.length - 5} more` : ''}`);
   }
+}
+
+function parseCountArg(argv: string[]): number | null {
+  const idx = argv.indexOf('--count');
+  if (idx === -1) return null;
+  const value = Number(argv[idx + 1]);
+  if (!Number.isInteger(value) || value <= 0) {
+    console.error('❌  --count expects a positive integer, e.g. --count 100');
+    process.exit(1);
+  }
+  return value;
 }

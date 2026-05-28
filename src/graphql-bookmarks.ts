@@ -477,6 +477,36 @@ async function fetchPageWithRetry(csrfToken: string, cursor?: string, cookieHead
   throw lastError ?? new Error('GraphQL Bookmarks API: all retry attempts failed. Try again later.');
 }
 
+export async function fetchBookmarkedTweetIds(
+  csrfToken: string,
+  cookieHeader?: string,
+  options: { maxCount?: number; pageSize?: number } = {},
+): Promise<string[]> {
+  const maxCount = options.maxCount ?? Number.POSITIVE_INFINITY;
+  if (maxCount <= 0) return [];
+
+  const pageSize = Math.max(1, Math.min(options.pageSize ?? 100, 100));
+  const ids: string[] = [];
+  let cursor: string | undefined;
+
+  while (ids.length < maxCount) {
+    const remaining = Number.isFinite(maxCount)
+      ? Math.max(1, Math.min(pageSize, maxCount - ids.length))
+      : pageSize;
+    const result = await fetchPageWithRetry(csrfToken, cursor, cookieHeader, remaining);
+
+    for (const record of result.records) {
+      ids.push(record.id);
+      if (ids.length >= maxCount) break;
+    }
+
+    if (!result.nextCursor || result.records.length === 0) break;
+    cursor = result.nextCursor;
+  }
+
+  return ids;
+}
+
 export function scoreRecord(record: BookmarkRecord): number {
   let score = 0;
   if (record.postedAt) score += 2;

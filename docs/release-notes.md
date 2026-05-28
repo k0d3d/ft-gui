@@ -109,10 +109,10 @@ AppImageLauncher tracks each AppImage by filename. The filenames `FT GUI-2.0.0.A
 
 ### What changed
 
-- **AppImage filename** — now always `FT-GUI.AppImage` (no version). AppImageLauncher sees all versions as the same app; new installs replace the old entry.
 - **`X-AppImage-Version` stripped** — `build/patch-appimage.mjs` runs automatically after `electron-builder`. It finds the squashfs inside the AppImage, extracts it with `unsquashfs`, removes the `X-AppImage-Version=` line from the `.desktop` file, repacks with `mksquashfs`, and reassembles in place.
+- **Historical note** — this release briefly standardized the AppImage filename to `FT-GUI.AppImage` to reduce duplicate AppImageLauncher entries. Current releases use versioned filenames again.
 
-**To fix existing duplicate entries:** Remove each old "FT GUI (2.x.x)" entry in AppImageLauncher (right-click → Remove), then integrate the new `FT-GUI.AppImage`.
+**If AppImageLauncher shows duplicate entries:** Remove old "FT GUI (2.x.x)" launchers in AppImageLauncher and reintegrate the current AppImage.
 
 ---
 
@@ -129,7 +129,7 @@ The app is now called **FT GUI** everywhere — window title, sidebar, HTML titl
 ### Distribution packages
 
 ```bash
-pnpm gui:pack        # Linux: FT-GUI.AppImage + FT-GUI.deb → release/
+pnpm gui:pack        # Linux: FT-GUI-<version>.AppImage + FT-GUI-<version>.deb → release/
 pnpm gui:pack:all    # + macOS dmg + Windows NSIS exe
 ```
 

@@ -26,7 +26,7 @@ Or build from source:
 git clone https://github.com/k0d3d/ft-gui
 cd ft-gui
 pnpm install
-pnpm gui:pack          # → release/FT-GUI.AppImage + .deb
+pnpm gui:pack          # → release/FT-GUI-<version>.AppImage + .deb
 pnpm gui:start         # run the built app
 ```
 

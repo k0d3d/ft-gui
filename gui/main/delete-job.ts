@@ -1,5 +1,4 @@
-import { getAllTweetIds } from '../../src/bookmarks-db.js';
-import { deleteXBookmarks } from '../../src/bookmark-delete.js';
+import { deleteXBookmarks, getCurrentBookmarkTweetIds } from '../../src/bookmark-delete.js';
 import { detectValidSessions, type BrowserSession } from '../../src/graphql-bookmarks.js';
 
 interface DeleteJobResult {
@@ -10,7 +9,7 @@ interface DeleteJobResult {
 interface StartDeleteBookmarksJobDeps {
   randomUUID?: () => string;
   tweetIds?: string[];
-  getAllTweetIds?: () => Promise<string[]> | string[];
+  getCurrentBookmarkTweetIds?: (session: BrowserSession) => Promise<string[]> | string[];
   detectValidSessions?: () => Promise<BrowserSession[]> | BrowserSession[];
   deleteXBookmarks?: (
     tweetIds: string[],
@@ -24,7 +23,7 @@ export function startDeleteBookmarksJob(deps: StartDeleteBookmarksJobDeps): { jo
   const {
     randomUUID = () => crypto.randomUUID(),
     tweetIds,
-    getAllTweetIds: loadTweetIds = getAllTweetIds,
+    getCurrentBookmarkTweetIds: loadTweetIds = getCurrentBookmarkTweetIds,
     detectValidSessions: loadSessions = detectValidSessions,
     deleteXBookmarks: runDelete = deleteXBookmarks,
     emit,
@@ -34,14 +33,14 @@ export function startDeleteBookmarksJob(deps: StartDeleteBookmarksJobDeps): { jo
 
   const finished = Promise.resolve()
     .then(async () => {
-      const ids = tweetIds ?? await loadTweetIds();
-      if (!ids.length) {
-        throw new Error('No bookmarks found in the local library.');
-      }
-
       const sessions = await loadSessions();
       if (!sessions.length) {
         throw new Error('No browser session found. Open x.com in Chrome or Firefox first.');
+      }
+
+      const ids = tweetIds ?? await loadTweetIds(sessions[0]);
+      if (!ids.length) {
+        throw new Error(tweetIds?.length ? 'No bookmarks selected for deletion.' : 'No live bookmarks found in your X account.');
       }
 
       emit('delete:progress', { jobId, done: 0, total: ids.length });

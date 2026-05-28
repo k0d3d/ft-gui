@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Strips X-AppImage-Version from the embedded .desktop file inside FT-GUI.AppImage.
+ * Strips X-AppImage-Version from the embedded .desktop file inside the
+ * versioned FT-GUI AppImage release artifact.
  *
  * AppImageLauncher reads that field and appends "(version)" to the displayed app name.
  * Strategy:
@@ -19,7 +20,9 @@ import { execFileSync } from 'child_process'
 import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const appImagePath = path.resolve(__dirname, '../release/FT-GUI.AppImage')
+const packageJsonPath = path.resolve(__dirname, '../package.json')
+const { version } = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
+const appImagePath = path.resolve(__dirname, `../release/FT-GUI-${version}.AppImage`)
 
 const MKSQUASHFS = path.join(
   os.homedir(),

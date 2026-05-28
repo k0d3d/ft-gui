@@ -1,4 +1,4 @@
-import type { BrowserSession } from './graphql-bookmarks.js';
+import { fetchBookmarkedTweetIds, type BrowserSession } from './graphql-bookmarks.js';
 import { loadPreferences } from './preferences.js';
 
 const X_PUBLIC_BEARER =
@@ -42,7 +42,18 @@ async function deleteSingle(tweetId: string, session: BrowserSession): Promise<b
     headers: buildHeaders(session),
     body,
   });
-  return res.ok;
+  if (!res.ok) return false;
+
+  const text = await res.text();
+  try {
+    const json = JSON.parse(text) as {
+      data?: { tweet_bookmark_delete?: string };
+      errors?: unknown[];
+    };
+    return json.data?.tweet_bookmark_delete === 'Done' && !json.errors?.length;
+  } catch {
+    return false;
+  }
 }
 
 function sleep(ms: number): Promise<void> {
@@ -78,4 +89,11 @@ export async function deleteXBookmarks(
   }
 
   return { deleted, errors };
+}
+
+export async function getCurrentBookmarkTweetIds(
+  session: BrowserSession,
+  maxCount?: number,
+): Promise<string[]> {
+  return fetchBookmarkedTweetIds(session.csrfToken, session.cookieHeader, { maxCount });
 }

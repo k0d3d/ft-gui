@@ -17,7 +17,7 @@ pnpm gui:dev
 pnpm gui:build
 
 # Package for distribution
-pnpm gui:pack          # Linux AppImage + deb
+pnpm gui:pack          # Linux FT-GUI-<version>.AppImage + .deb
 pnpm gui:pack:all      # Linux + macOS + Windows
 ```
 
