@@ -3,6 +3,7 @@ import { invoke } from '../hooks/useIpc'
 import type { SearchResult } from '../../main/ipc-types'
 import type { Screen } from '../app'
 import { Search } from 'lucide-react'
+import { formatBookmarkDate } from '../date-format'
 
 interface Props {
   onNav: (s: Screen) => void
@@ -79,7 +80,7 @@ export function SearchScreen({ onNav }: Props) {
                     @{r.authorHandle ?? 'unknown'}
                   </span>
                   {r.postedAt && (
-                    <span className="text-xs text-gray-600">{r.postedAt.slice(0, 10)}</span>
+                    <span className="text-xs text-gray-600">{formatBookmarkDate(r.postedAt)}</span>
                   )}
                 </div>
                 <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed">{r.text}</p>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { invoke } from '../hooks/useIpc'
 import type { BookmarkTimelineItem } from '../../main/ipc-types'
 import { ArrowLeft, ExternalLink, RotateCcw } from 'lucide-react'
+import { formatBookmarkDate } from '../date-format'
 
 interface Props {
   id: string
@@ -41,7 +42,7 @@ export function BookmarkDetailScreen({ id, onBack }: Props) {
 
       <div className="mb-4">
         <p className="text-xs text-gray-600 mb-1">
-          @{bm.authorHandle ?? 'unknown'} · {bm.postedAt?.slice(0, 10) ?? '?'}
+          @{bm.authorHandle ?? 'unknown'} · {formatBookmarkDate(bm.postedAt)}
         </p>
         <p className="text-gray-200 leading-relaxed whitespace-pre-wrap">{bm.text}</p>
       </div>

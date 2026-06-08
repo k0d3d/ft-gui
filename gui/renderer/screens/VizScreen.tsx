@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { invoke } from '../hooks/useIpc'
+import { formatBookmarkDate } from '../date-format'
 import {
   BarChart,
   Bar,
@@ -418,7 +419,7 @@ function GemCard({ gem, accentColor }: { gem: GemBookmark; accentColor: string }
     <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.05]">
       <div className="flex items-baseline gap-2 mb-1">
         <span className="text-xs font-medium" style={{ color: accentColor }}>@{gem.author}</span>
-        <span className="text-xs text-gray-700">{gem.postedAt?.slice(0, 10)}</span>
+        <span className="text-xs text-gray-700">{formatBookmarkDate(gem.postedAt)}</span>
       </div>
       <p className="text-xs text-gray-400 leading-relaxed line-clamp-3">{gem.text}</p>
     </div>

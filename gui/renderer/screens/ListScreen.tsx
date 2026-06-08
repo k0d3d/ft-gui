@@ -9,6 +9,7 @@ import type {
 } from '../../main/ipc-types'
 import type { Screen } from '../app'
 import { Search, Trash2, RotateCcw } from 'lucide-react'
+import { formatBookmarkDate } from '../date-format'
 
 interface Props {
   onNav: (s: Screen) => void
@@ -216,7 +217,7 @@ export function ListScreen({ onNav }: Props) {
                   </span>
                   {bm.postedAt && (
                     <span className="text-xs text-gray-600 shrink-0">
-                      {bm.postedAt.slice(0, 10)}
+                      {formatBookmarkDate(bm.postedAt)}
                     </span>
                   )}
                   {bm.primaryCategory && bm.primaryCategory !== 'unclassified' && (
