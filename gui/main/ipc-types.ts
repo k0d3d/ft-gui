@@ -5,6 +5,7 @@ import type {
   SearchOptions,
 } from '../../src/bookmarks-db.js'
 import type { BookmarkStatusView } from '../../src/bookmarks-service.js'
+import type { DownloadedBookmarkMedia } from '../../src/bookmark-media.js'
 
 export type {
   BookmarkTimelineItem,
@@ -71,7 +72,11 @@ export interface MediaProgressEvent {
   jobId: string
   done: number
   total: number
-  bytes: number
+  downloaded: number
+}
+
+export interface BookmarkMediaView extends DownloadedBookmarkMedia {
+  displayUrl: string
 }
 
 export interface OpenAiSettingsView {
@@ -136,5 +141,6 @@ export interface IpcChannels {
   'app:performance:get': [filters: undefined, result: { startup: StartupMetric[] }]
   'sync:start': [opts: SyncGuiOptions, result: { jobId: string }]
   'classify:llm:start': [opts: ClassifyGuiOptions, result: { jobId: string }]
-  'media:fetch:start': [opts: { limit?: number }, result: { jobId: string }]
+  'media:fetch:start': [opts: { limit?: number; bookmarkIds?: string[]; skipProfileImages?: boolean }, result: { jobId: string }]
+  'media:bookmark': [bookmarkId: string, result: BookmarkMediaView[]]
 }

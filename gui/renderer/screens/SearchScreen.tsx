@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react'
-import { invoke } from '../hooks/useIpc'
-import type { BookmarkTimelineItem, SearchResult } from '../../main/ipc-types'
+import { invoke, useIpcEvent } from '../hooks/useIpc'
+import type { BookmarkTimelineItem, MediaProgressEvent, SearchResult } from '../../main/ipc-types'
 import type { Screen } from '../app'
-import { Download, Search } from 'lucide-react'
+import { Download, Image, Search } from 'lucide-react'
 import { formatBookmarkDate } from '../date-format'
 import { downloadBookmarkJson } from '../bookmark-export'
 
@@ -18,7 +18,37 @@ export function SearchScreen({ onNav }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [selectMode, setSelectMode] = useState(false)
   const [actionMsg, setActionMsg] = useState('')
+  const [mediaJobId, setMediaJobId] = useState<string | null>(null)
+  const [mediaRunning, setMediaRunning] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useIpcEvent('media:progress', (p) => {
+    const data = p as MediaProgressEvent
+    if (data.jobId === mediaJobId || (mediaJobId === null && mediaRunning)) {
+      if (mediaJobId === null) setMediaJobId(data.jobId)
+      setActionMsg(`Fetching media… ${data.downloaded} downloaded`)
+    }
+  }, [mediaJobId, mediaRunning])
+
+  useIpcEvent('media:done', (p) => {
+    const data = p as { jobId: string; downloaded: number; failed: number }
+    if (data.jobId === mediaJobId || (mediaJobId === null && mediaRunning)) {
+      if (mediaJobId === null) setMediaJobId(data.jobId)
+      setMediaRunning(false)
+      setActionMsg(`Fetched ${data.downloaded} media asset${data.downloaded === 1 ? '' : 's'}${data.failed ? ` (${data.failed} failed)` : ''}`)
+      setTimeout(() => setActionMsg(''), 4000)
+    }
+  }, [mediaJobId, mediaRunning])
+
+  useIpcEvent('media:error', (p) => {
+    const data = p as { jobId: string; error: string }
+    if (data.jobId === mediaJobId || (mediaJobId === null && mediaRunning)) {
+      if (mediaJobId === null) setMediaJobId(data.jobId)
+      setMediaRunning(false)
+      setActionMsg(data.error)
+      setTimeout(() => setActionMsg(''), 4000)
+    }
+  }, [mediaJobId, mediaRunning])
 
   async function runSearch(q: string) {
     if (!q.trim()) return
@@ -66,22 +96,52 @@ export function SearchScreen({ onNav }: Props) {
     setTimeout(() => setActionMsg(''), 3000)
   }
 
+  async function fetchSelectedMedia() {
+    if (!selected.size) return
+    const bookmarkIds = results.filter((r) => selected.has(r.id)).map((r) => r.id)
+    setMediaRunning(true)
+    setMediaJobId(null)
+    setActionMsg(`Starting media fetch for ${bookmarkIds.length} bookmark${bookmarkIds.length > 1 ? 's' : ''}…`)
+    try {
+      const result = await invoke<{ jobId: string }>('media:fetch:start', {
+        bookmarkIds,
+        skipProfileImages: true,
+      })
+      setMediaJobId(result.jobId)
+    } catch (e: unknown) {
+      setMediaRunning(false)
+      setActionMsg((e as Error).message)
+      setTimeout(() => setActionMsg(''), 4000)
+    }
+  }
+
   return (
     <div className="p-6 max-w-3xl">
       <div className="flex items-center gap-3 mb-4">
         <h1 className="text-sm font-semibold text-gray-400 mr-auto">Search bookmarks</h1>
         {actionMsg && <span className="text-xs text-mint">{actionMsg}</span>}
         {selectMode && selected.size > 0 && (
-          <button
-            onClick={exportSelected}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-mint/15 text-mint hover:bg-mint/25 transition-colors"
-          >
-            <Download size={12} /> Export JSON ({selected.size})
-          </button>
+          <>
+            <button
+              onClick={exportSelected}
+              disabled={mediaRunning}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-mint/15 text-mint hover:bg-mint/25 disabled:opacity-40 transition-colors"
+            >
+              <Download size={12} /> Export JSON ({selected.size})
+            </button>
+            <button
+              onClick={fetchSelectedMedia}
+              disabled={mediaRunning}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-peach/15 text-peach hover:bg-peach/25 disabled:opacity-40 transition-colors"
+            >
+              <Image size={12} /> {mediaRunning ? 'Fetching media…' : `Fetch media (${selected.size})`}
+            </button>
+          </>
         )}
         {results.length > 0 && (
           <button
             onClick={() => { setSelectMode(!selectMode); setSelected(new Set()) }}
+            disabled={mediaRunning}
             className={`px-3 py-1.5 rounded text-xs transition-colors ${selectMode ? 'bg-white/10 text-gray-200' : 'bg-white/[0.04] text-gray-500 hover:text-gray-300'}`}
           >
             {selectMode ? 'Cancel' : 'Select'}

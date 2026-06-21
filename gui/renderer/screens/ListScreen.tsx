@@ -6,9 +6,10 @@ import type {
   DeleteDoneEvent,
   DeleteErrorEvent,
   DeleteProgressEvent,
+  MediaProgressEvent,
 } from '../../main/ipc-types'
 import type { Screen } from '../app'
-import { Download, Search, Trash2, RotateCcw } from 'lucide-react'
+import { Download, Image, Search, Trash2, RotateCcw } from 'lucide-react'
 import { formatBookmarkDate } from '../date-format'
 import { downloadBookmarkJson } from '../bookmark-export'
 
@@ -29,6 +30,8 @@ export function ListScreen({ onNav }: Props) {
   const [actionMsg, setActionMsg] = useState('')
   const [deleteJobId, setDeleteJobId] = useState<string | null>(null)
   const [deleteRunning, setDeleteRunning] = useState(false)
+  const [mediaJobId, setMediaJobId] = useState<string | null>(null)
+  const [mediaRunning, setMediaRunning] = useState(false)
 
   const load = useCallback(async (f: BookmarkTimelineFilters) => {
     setLoading(true)
@@ -76,6 +79,34 @@ export function ListScreen({ onNav }: Props) {
       setTimeout(() => setActionMsg(''), 4000)
     }
   }, [deleteJobId, deleteRunning])
+
+  useIpcEvent('media:progress', (p) => {
+    const data = p as MediaProgressEvent
+    if (data.jobId === mediaJobId || (mediaJobId === null && mediaRunning)) {
+      if (mediaJobId === null) setMediaJobId(data.jobId)
+      setActionMsg(`Fetching media… ${data.downloaded} downloaded`)
+    }
+  }, [mediaJobId, mediaRunning])
+
+  useIpcEvent('media:done', (p) => {
+    const data = p as { jobId: string; downloaded: number; failed: number }
+    if (data.jobId === mediaJobId || (mediaJobId === null && mediaRunning)) {
+      if (mediaJobId === null) setMediaJobId(data.jobId)
+      setMediaRunning(false)
+      setActionMsg(`Fetched ${data.downloaded} media asset${data.downloaded === 1 ? '' : 's'}${data.failed ? ` (${data.failed} failed)` : ''}`)
+      setTimeout(() => setActionMsg(''), 4000)
+    }
+  }, [mediaJobId, mediaRunning])
+
+  useIpcEvent('media:error', (p) => {
+    const data = p as { jobId: string; error: string }
+    if (data.jobId === mediaJobId || (mediaJobId === null && mediaRunning)) {
+      if (mediaJobId === null) setMediaJobId(data.jobId)
+      setMediaRunning(false)
+      setActionMsg(data.error)
+      setTimeout(() => setActionMsg(''), 4000)
+    }
+  }, [mediaJobId, mediaRunning])
 
   function goPage(p: number) {
     setPage(p)
@@ -134,6 +165,25 @@ export function ListScreen({ onNav }: Props) {
     setTimeout(() => setActionMsg(''), 3000)
   }
 
+  async function fetchSelectedMedia() {
+    if (!selected.size) return
+    const bookmarkIds = bookmarks.filter((b) => selected.has(b.id)).map((b) => b.id)
+    setMediaRunning(true)
+    setMediaJobId(null)
+    setActionMsg(`Starting media fetch for ${bookmarkIds.length} bookmark${bookmarkIds.length > 1 ? 's' : ''}…`)
+    try {
+      const result = await invoke<{ jobId: string }>('media:fetch:start', {
+        bookmarkIds,
+        skipProfileImages: true,
+      })
+      setMediaJobId(result.jobId)
+    } catch (e: unknown) {
+      setMediaRunning(false)
+      setActionMsg((e as Error).message)
+      setTimeout(() => setActionMsg(''), 4000)
+    }
+  }
+
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
   return (
@@ -150,21 +200,28 @@ export function ListScreen({ onNav }: Props) {
           <>
             <button
               onClick={exportSelected}
-              disabled={deleteRunning}
+              disabled={deleteRunning || mediaRunning}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-mint/15 text-mint hover:bg-mint/25 disabled:opacity-40 transition-colors"
             >
               <Download size={12} /> Export JSON ({selected.size})
             </button>
             <button
+              onClick={fetchSelectedMedia}
+              disabled={deleteRunning || mediaRunning}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-peach/15 text-peach hover:bg-peach/25 disabled:opacity-40 transition-colors"
+            >
+              <Image size={12} /> {mediaRunning ? 'Fetching media…' : `Fetch media (${selected.size})`}
+            </button>
+            <button
               onClick={resetSelected}
-              disabled={deleteRunning}
+              disabled={deleteRunning || mediaRunning}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-periwinkle/20 text-periwinkle hover:bg-periwinkle/30 disabled:opacity-40 transition-colors"
             >
               <RotateCcw size={12} /> Reset classification ({selected.size})
             </button>
             <button
               onClick={deleteFromX}
-              disabled={deleteRunning}
+              disabled={deleteRunning || mediaRunning}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-coral/20 text-coral hover:bg-coral/30 disabled:opacity-40 transition-colors"
             >
               <Trash2 size={12} /> Remove from X ({selected.size})
@@ -173,7 +230,7 @@ export function ListScreen({ onNav }: Props) {
         )}
         <button
           onClick={() => { setSelectMode(!selectMode); setSelected(new Set()) }}
-          disabled={deleteRunning}
+          disabled={deleteRunning || mediaRunning}
           className={`px-3 py-1.5 rounded text-xs transition-colors ${selectMode ? 'bg-white/10 text-gray-200' : 'bg-white/[0.04] text-gray-500 hover:text-gray-300'}`}
         >
           {selectMode ? 'Cancel' : 'Select'}

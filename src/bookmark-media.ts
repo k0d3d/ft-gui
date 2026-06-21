@@ -43,6 +43,16 @@ export interface MediaFetchProgress {
   currentSourceUrl?: string;
 }
 
+export interface DownloadedBookmarkMedia {
+  bookmarkId: string;
+  tweetId: string;
+  sourceUrl: string;
+  localPath: string;
+  contentType?: string;
+  bytes?: number;
+  fetchedAt: string;
+}
+
 interface MediaFetchTarget {
   bookmarkId: string;
   tweetId: string;
@@ -239,7 +249,7 @@ function hasPendingMediaTarget(
 }
 
 export async function fetchBookmarkMediaBatch(
-  options: { limit?: number; maxBytes?: number; skipProfileImages?: boolean; onProgress?: (progress: MediaFetchProgress) => void } = {}
+  options: { limit?: number; maxBytes?: number; skipProfileImages?: boolean; bookmarkIds?: string[]; onProgress?: (progress: MediaFetchProgress) => void } = {}
 ): Promise<MediaFetchManifest> {
   const limit = typeof options.limit === 'number' && !Number.isNaN(options.limit)
     ? Math.max(0, options.limit)
@@ -253,8 +263,10 @@ export async function fetchBookmarkMediaBatch(
   const previous = await loadManifest();
   const coveredAssetKeys = buildCoveredAssetKeys(previous, maxBytes);
   const coveredProfileImageUrls = buildCoveredProfileImageUrls(previous, maxBytes);
+  const bookmarkIdFilter = options.bookmarkIds?.length ? new Set(options.bookmarkIds) : null;
   const bookmarks = await readJsonLines<BookmarkRecord>(twitterBookmarksCachePath());
   const candidates = bookmarks
+    .filter((bookmark) => !bookmarkIdFilter || bookmarkIdFilter.has(bookmark.id))
     .filter(hasMediaCandidate)
     .filter((bookmark) => hasPendingMediaTarget(bookmark, coveredAssetKeys, coveredProfileImageUrls, skipProfileImages))
     .slice(0, limit);
@@ -498,4 +510,24 @@ export async function fetchBookmarkMediaBatch(
 
   await writeJson(manifestPath, manifest);
   return manifest;
+}
+
+export async function getDownloadedMediaForBookmark(bookmarkId: string): Promise<DownloadedBookmarkMedia[]> {
+  const manifest = await loadManifest();
+  if (!manifest) return [];
+
+  return manifest.entries
+    .filter((entry) => entry.bookmarkId === bookmarkId)
+    .filter((entry) => entry.status === 'downloaded')
+    .filter((entry) => Boolean(entry.localPath))
+    .filter((entry) => !entry.sourceUrl.includes('/profile_images/'))
+    .map((entry) => ({
+      bookmarkId: entry.bookmarkId,
+      tweetId: entry.tweetId,
+      sourceUrl: entry.sourceUrl,
+      localPath: entry.localPath!,
+      contentType: entry.contentType,
+      bytes: entry.bytes,
+      fetchedAt: entry.fetchedAt,
+    }));
 }

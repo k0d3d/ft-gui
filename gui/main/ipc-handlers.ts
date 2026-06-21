@@ -1,4 +1,5 @@
 import { ipcMain, BrowserWindow } from 'electron'
+import { pathToFileURL } from 'node:url'
 import {
   listBookmarks,
   countBookmarks,
@@ -18,7 +19,7 @@ import { getBookmarkStatusView } from '../../src/bookmarks-service.js'
 import { dataDir } from '../../src/paths.js'
 import { syncBookmarksGraphQL } from '../../src/graphql-bookmarks.js'
 import { classifyWithLlm, classifyDomainsWithLlm } from '../../src/bookmark-classify-llm.js'
-import { fetchBookmarkMediaBatch } from '../../src/bookmark-media.js'
+import { fetchBookmarkMediaBatch, getDownloadedMediaForBookmark } from '../../src/bookmark-media.js'
 import { resolveEngine } from '../../src/engine.js'
 import { getVizData } from '../../src/bookmarks-viz.js'
 import { runHealthChecks, autoHealDeleteQueryId } from '../../src/health-check.js'
@@ -204,12 +205,14 @@ export function registerIpcHandlers(win: BrowserWindow): void {
 
   // ── Long-running: fetch media ────────────────────────────────────────────
 
-  ipcMain.handle('media:fetch:start', async (_e, opts: { limit?: number }) => {
+  ipcMain.handle('media:fetch:start', async (_e, opts: { limit?: number; bookmarkIds?: string[]; skipProfileImages?: boolean } = {}) => {
     const jobId = crypto.randomUUID()
 
     setTimeout(() => {
       fetchBookmarkMediaBatch({
         limit: opts.limit,
+        bookmarkIds: opts.bookmarkIds,
+        skipProfileImages: opts.skipProfileImages,
         onProgress: (p) => {
           win.webContents.send('media:progress', {
             jobId,
@@ -228,5 +231,13 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     }, 0)
 
     return { jobId }
+  })
+
+  ipcMain.handle('media:bookmark', async (_e, bookmarkId: string) => {
+    const media = await getDownloadedMediaForBookmark(bookmarkId)
+    return media.map((entry) => ({
+      ...entry,
+      displayUrl: pathToFileURL(entry.localPath).toString(),
+    }))
   })
 }

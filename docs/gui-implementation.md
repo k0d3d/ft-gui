@@ -49,8 +49,8 @@ The GUI is named **FT GUI**. It is built on top of [fieldtheory-cli](https://git
 |---|---|
 | `main.ts` | BrowserWindow lifecycle, single-instance lock, auto-updater, DevTools in dev mode |
 | `preload.ts` | contextBridge exposing `window.ftApi` (invoke / on / off); built as CJS |
-| `ipc-types.ts` | Typed IPC channel surface shared by main and renderer |
-| `ipc-handlers.ts` | All `ipcMain.handle()` registrations; imports `src/` directly |
+| `ipc-types.ts` | Typed IPC channel surface shared by main and renderer, including media fetch/detail payloads |
+| `ipc-handlers.ts` | All `ipcMain.handle()` registrations; imports `src/` directly; starts selected media fetch jobs and exposes downloaded media URLs |
 
 #### React renderer (`gui/renderer/`)
 | File | Purpose |
@@ -62,9 +62,9 @@ The GUI is named **FT GUI**. It is built on top of [fieldtheory-cli](https://git
 | `hooks/useIpc.ts` | `invoke<T>()` helper and `useIpcEvent()` hook |
 | `components/Sidebar.tsx` | Left-rail navigation; shows `v{__APP_VERSION__}` at bottom |
 | `screens/DashboardScreen.tsx` | Status metrics, quick-action buttons, category pills |
-| `screens/ListScreen.tsx` | Paginated bookmark list with multi-select, JSON export, bulk delete, reset classification |
-| `screens/SearchScreen.tsx` | Full-text search with BM25 results, result selection, JSON export |
-| `screens/BookmarkDetailScreen.tsx` | Full tweet, article, quoted tweet, engagement, single-bookmark actions |
+| `screens/ListScreen.tsx` | Paginated bookmark list with multi-select, JSON export, selected media fetch, bulk delete, reset classification |
+| `screens/SearchScreen.tsx` | Full-text search with BM25 results, result selection, JSON export, selected media fetch |
+| `screens/BookmarkDetailScreen.tsx` | Full tweet, downloaded media, article, quoted tweet, engagement, single-bookmark actions |
 | `screens/SyncScreen.tsx` | Sync trigger with live progress; "Remove from X after sync" option |
 | `screens/ClassifyScreen.tsx` | LLM classify with two-phase progress; "Reset all first" option |
 | `screens/VizScreen.tsx` | 14-panel Recharts dashboard |

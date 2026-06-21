@@ -2,6 +2,26 @@
 
 ---
 
+## v2.1.11 — Selected Media Fetch
+
+**Released:** 2026-06-21
+
+This patch brings the existing media download pipeline into Browse and Search selection workflows, and makes downloaded post media visible on the detail screen.
+
+### What changed
+
+- **Browse media fetch** — select one or more bookmarks in Browse and click **Fetch media** to download post images and videos for those bookmarks.
+- **Search media fetch** — Search select mode now has the same selected media fetch action.
+- **Post media only** — selected media fetch skips profile images and only downloads bookmark post media, including quoted-post media.
+- **Detail media display** — Bookmark Detail now reads the media manifest and renders downloaded images and videos inline when available.
+
+### Verification
+
+- `pnpm exec tsx --test tests/bookmark-media.test.ts`
+- `pnpm gui:build`
+
+---
+
 ## v2.1.10 — Selected JSON Export
 
 **Released:** 2026-06-21

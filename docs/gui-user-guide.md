@@ -1,6 +1,6 @@
 # FT GUI — User Guide
 
-**FT GUI v2.1.10** | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by @afar1
+**FT GUI v2.1.11** | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by @afar1
 
 ---
 
@@ -44,6 +44,7 @@ Full paginated list of your bookmark library (30 per page).
 **Select mode** — click "Select" in the toolbar to enter multi-select. Check individual rows or use "Select all on page." With items selected, bulk actions appear:
 
 - **Export JSON** — downloads the selected bookmarks as a `.json` file; the payload is always an array, even for one selected bookmark
+- **Fetch media** — downloads post images and videos for selected bookmarks; profile images are skipped
 - **Reset classification** — clears categories and domains for selected bookmarks so the next classify run re-processes them
 - **Remove from X** — un-bookmarks selected items from your X account; your local copy is kept; progress is shown inline while the job runs
 
@@ -55,9 +56,11 @@ Full-text search across bookmark text, author handles, and extracted article con
 
 Search results also support **Select** mode. Select one or more results, or use the result-level select-all checkbox, then click **Export JSON** to download the selected bookmarks. Search exports the full bookmark record when available, matching Browse export behavior.
 
+Use **Fetch media** in Search select mode to download post images and videos for the selected results without switching to the Media screen.
+
 ### Bookmark Detail
 
-Shows the full tweet text, extracted article (title, body, source site), quoted tweet if any, categories, domains, X folders, and engagement stats (likes, reposts, views).
+Shows the full tweet text, downloaded post media when available, extracted article (title, body, source site), quoted tweet if any, categories, domains, X folders, and engagement stats (likes, reposts, views).
 
 **Actions:**
 - **Open on X** — opens the tweet in your system browser
@@ -114,7 +117,7 @@ Numeric summary: total bookmarks, unique voices, date range. Top 15 authors with
 
 ### Media
 
-Downloads images and video poster frames for bookmarks. Set an optional limit to cap the run. Media saves to `~/.fieldtheory/bookmarks/media/`.
+Downloads images and video poster frames for bookmarks. Set an optional limit to cap the run. Media saves to `~/.fieldtheory/bookmarks/media/`. For a smaller targeted fetch, use **Fetch media** from Browse or Search select mode.
 
 ### Settings
 

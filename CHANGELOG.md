@@ -9,6 +9,16 @@ Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1]
 
 ---
 
+## [2.1.11] — 2026-06-21
+
+### Added
+- **Selected media fetch** — Browse and Search can fetch post media for selected bookmarks
+  - Selected fetch skips profile images and downloads only post/quoted-post media
+  - Fetch progress is shown inline with the selected action controls
+  - Bookmark Detail renders downloaded images and videos from the media manifest when available
+
+---
+
 ## [2.1.10] — 2026-06-21
 
 ### Added

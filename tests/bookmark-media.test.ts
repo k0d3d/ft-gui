@@ -4,7 +4,7 @@ import { mkdtemp, writeFile } from 'node:fs/promises';
 import { rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fetchBookmarkMediaBatch } from '../src/bookmark-media.js';
+import { fetchBookmarkMediaBatch, getDownloadedMediaForBookmark } from '../src/bookmark-media.js';
 
 async function withMediaDataDir(records: any[], fn: () => Promise<void>): Promise<void> {
   const dir = await mkdtemp(path.join(tmpdir(), 'ft-media-test-'));
@@ -663,6 +663,137 @@ test('fetchBookmarkMediaBatch with skipProfileImages skips profile images but do
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test('fetchBookmarkMediaBatch can fetch post media for selected bookmark ids only', async () => {
+  const firstUrl = 'https://pbs.twimg.com/media/selected-first.jpg';
+  const secondUrl = 'https://pbs.twimg.com/media/selected-second.jpg';
+  const records = [
+    {
+      id: '1',
+      tweetId: '1',
+      url: 'https://x.com/alice/status/1',
+      text: 'first selected',
+      authorHandle: 'alice',
+      syncedAt: '2026-04-09T00:00:00.000Z',
+      mediaObjects: [{ type: 'photo', url: firstUrl }],
+      links: [],
+      tags: [],
+      ingestedVia: 'graphql',
+    },
+    {
+      id: '2',
+      tweetId: '2',
+      url: 'https://x.com/bob/status/2',
+      text: 'second not selected',
+      authorHandle: 'bob',
+      syncedAt: '2026-04-09T00:00:00.000Z',
+      mediaObjects: [{ type: 'photo', url: secondUrl }],
+      links: [],
+      tags: [],
+      ingestedVia: 'graphql',
+    },
+  ];
+
+  const fetchedUrls: string[] = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    const url = String(input instanceof Request ? input.url : input);
+    const method = init?.method ?? 'GET';
+    if (method === 'HEAD') {
+      return new Response(null, {
+        status: 200,
+        headers: { 'content-length': '4', 'content-type': 'image/jpeg' },
+      });
+    }
+    fetchedUrls.push(url);
+    return new Response(Uint8Array.from([1, 2, 3, 4]), {
+      status: 200,
+      headers: { 'content-type': 'image/jpeg' },
+    });
+  };
+
+  try {
+    await withMediaDataDir(records, async () => {
+      const manifest = await fetchBookmarkMediaBatch({
+        bookmarkIds: ['1'],
+        maxBytes: 1024,
+        skipProfileImages: true,
+      });
+
+      assert.equal(manifest.downloaded, 1);
+      assert.deepEqual(fetchedUrls, [firstUrl]);
+      assert.deepEqual(manifest.entries.map((entry) => entry.bookmarkId), ['1']);
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('getDownloadedMediaForBookmark returns downloaded post media entries for detail display', async () => {
+  const records = [{
+    id: '1',
+    tweetId: '1',
+    url: 'https://x.com/alice/status/1',
+    text: 'detail media',
+    syncedAt: '2026-04-09T00:00:00.000Z',
+    mediaObjects: [],
+    links: [],
+    tags: [],
+    ingestedVia: 'graphql',
+  }];
+
+  await withMediaDataDir(records, async () => {
+    await writeFile(path.join(process.env.FT_DATA_DIR!, 'media-manifest.json'), JSON.stringify({
+      schemaVersion: 1,
+      generatedAt: '2026-06-21T00:00:00.000Z',
+      limit: 1,
+      maxBytes: 1024,
+      processed: 1,
+      downloaded: 1,
+      skippedTooLarge: 0,
+      failed: 0,
+      entries: [
+        {
+          bookmarkId: '1',
+          tweetId: '1',
+          tweetUrl: 'https://x.com/alice/status/1',
+          sourceUrl: 'https://pbs.twimg.com/media/detail.jpg',
+          localPath: path.join(process.env.FT_DATA_DIR!, 'media', '1-detail.jpg'),
+          contentType: 'image/jpeg',
+          bytes: 4,
+          status: 'downloaded',
+          fetchedAt: '2026-06-21T00:00:00.000Z',
+        },
+        {
+          bookmarkId: '1',
+          tweetId: '1',
+          tweetUrl: 'https://x.com/alice/status/1',
+          sourceUrl: 'https://pbs.twimg.com/profile_images/123/avatar_400x400.jpg',
+          localPath: path.join(process.env.FT_DATA_DIR!, 'media', 'avatar.jpg'),
+          contentType: 'image/jpeg',
+          bytes: 4,
+          status: 'downloaded',
+          fetchedAt: '2026-06-21T00:00:00.000Z',
+        },
+        {
+          bookmarkId: '2',
+          tweetId: '2',
+          tweetUrl: 'https://x.com/bob/status/2',
+          sourceUrl: 'https://pbs.twimg.com/media/other.jpg',
+          localPath: path.join(process.env.FT_DATA_DIR!, 'media', '2-other.jpg'),
+          contentType: 'image/jpeg',
+          bytes: 4,
+          status: 'downloaded',
+          fetchedAt: '2026-06-21T00:00:00.000Z',
+        },
+      ],
+    }));
+
+    const media = await getDownloadedMediaForBookmark('1');
+    assert.equal(media.length, 1);
+    assert.equal(media[0].sourceUrl, 'https://pbs.twimg.com/media/detail.jpg');
+  });
 });
 
 test('fetchBookmarkMediaBatch with skipProfileImages excludes pfp-only bookmarks from candidates', async () => {
