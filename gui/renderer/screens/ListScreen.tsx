@@ -8,8 +8,9 @@ import type {
   DeleteProgressEvent,
 } from '../../main/ipc-types'
 import type { Screen } from '../app'
-import { Search, Trash2, RotateCcw } from 'lucide-react'
+import { Download, Search, Trash2, RotateCcw } from 'lucide-react'
 import { formatBookmarkDate } from '../date-format'
+import { downloadBookmarkJson } from '../bookmark-export'
 
 interface Props {
   onNav: (s: Screen) => void
@@ -126,6 +127,13 @@ export function ListScreen({ onNav }: Props) {
     }
   }
 
+  function exportSelected() {
+    if (!selected.size) return
+    downloadBookmarkJson(bookmarks.filter((b) => selected.has(b.id)))
+    setActionMsg(`Exported ${selected.size} bookmark${selected.size > 1 ? 's' : ''}`)
+    setTimeout(() => setActionMsg(''), 3000)
+  }
+
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
   return (
@@ -140,6 +148,13 @@ export function ListScreen({ onNav }: Props) {
         )}
         {selectMode && selected.size > 0 && (
           <>
+            <button
+              onClick={exportSelected}
+              disabled={deleteRunning}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-mint/15 text-mint hover:bg-mint/25 disabled:opacity-40 transition-colors"
+            >
+              <Download size={12} /> Export JSON ({selected.size})
+            </button>
             <button
               onClick={resetSelected}
               disabled={deleteRunning}

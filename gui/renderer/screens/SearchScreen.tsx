@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react'
 import { invoke } from '../hooks/useIpc'
-import type { SearchResult } from '../../main/ipc-types'
+import type { BookmarkTimelineItem, SearchResult } from '../../main/ipc-types'
 import type { Screen } from '../app'
-import { Search } from 'lucide-react'
+import { Download, Search } from 'lucide-react'
 import { formatBookmarkDate } from '../date-format'
+import { downloadBookmarkJson } from '../bookmark-export'
 
 interface Props {
   onNav: (s: Screen) => void
@@ -14,6 +15,9 @@ export function SearchScreen({ onNav }: Props) {
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [selectMode, setSelectMode] = useState(false)
+  const [actionMsg, setActionMsg] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
   async function runSearch(q: string) {
@@ -23,6 +27,8 @@ export function SearchScreen({ onNav }: Props) {
     try {
       const res = await invoke<SearchResult[]>('bookmarks:search', { query: q, limit: 50 })
       setResults(res)
+      setSelected(new Set())
+      setSelectMode(false)
     } finally {
       setLoading(false)
     }
@@ -32,9 +38,56 @@ export function SearchScreen({ onNav }: Props) {
     if (e.key === 'Enter') runSearch(query)
   }
 
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    if (selected.size === results.length) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(results.map((r) => r.id)))
+    }
+  }
+
+  async function exportSelected() {
+    if (!selected.size) return
+    const selectedResults = results.filter((r) => selected.has(r.id))
+    const fullBookmarks = await Promise.all(
+      selectedResults.map((r) => invoke<BookmarkTimelineItem | null>('bookmarks:get', r.id)),
+    )
+    const exportItems = fullBookmarks.map((bm, index) => bm ?? selectedResults[index])
+    downloadBookmarkJson(exportItems)
+    setActionMsg(`Exported ${exportItems.length} bookmark${exportItems.length > 1 ? 's' : ''}`)
+    setTimeout(() => setActionMsg(''), 3000)
+  }
+
   return (
     <div className="p-6 max-w-3xl">
-      <h1 className="text-sm font-semibold text-gray-400 mb-4">Search bookmarks</h1>
+      <div className="flex items-center gap-3 mb-4">
+        <h1 className="text-sm font-semibold text-gray-400 mr-auto">Search bookmarks</h1>
+        {actionMsg && <span className="text-xs text-mint">{actionMsg}</span>}
+        {selectMode && selected.size > 0 && (
+          <button
+            onClick={exportSelected}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-mint/15 text-mint hover:bg-mint/25 transition-colors"
+          >
+            <Download size={12} /> Export JSON ({selected.size})
+          </button>
+        )}
+        {results.length > 0 && (
+          <button
+            onClick={() => { setSelectMode(!selectMode); setSelected(new Set()) }}
+            className={`px-3 py-1.5 rounded text-xs transition-colors ${selectMode ? 'bg-white/10 text-gray-200' : 'bg-white/[0.04] text-gray-500 hover:text-gray-300'}`}
+          >
+            {selectMode ? 'Cancel' : 'Select'}
+          </button>
+        )}
+      </div>
 
       {/* Search input */}
       <div className="flex gap-2 mb-6">
@@ -67,24 +120,53 @@ export function SearchScreen({ onNav }: Props) {
 
       {!loading && results.length > 0 && (
         <div>
-          <p className="text-xs text-gray-600 mb-3">{results.length} result{results.length !== 1 ? 's' : ''}</p>
+          <div className="flex items-center gap-2 mb-3">
+            {selectMode && (
+              <input
+                type="checkbox"
+                checked={selected.size === results.length && results.length > 0}
+                onChange={toggleAll}
+                className="accent-lavender"
+              />
+            )}
+            <p className="text-xs text-gray-600">
+              {selectMode && selected.size > 0
+                ? `${selected.size} selected`
+                : `${results.length} result${results.length !== 1 ? 's' : ''}`}
+            </p>
+          </div>
           <div className="space-y-px">
             {results.map((r) => (
-              <button
+              <div
                 key={r.id}
-                onClick={() => onNav({ name: 'detail', id: r.id })}
-                className="w-full text-left px-4 py-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04] transition-colors"
+                onClick={() => selectMode ? toggleSelect(r.id) : onNav({ name: 'detail', id: r.id })}
+                className={`w-full text-left px-4 py-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04] transition-colors cursor-pointer ${
+                  selected.has(r.id) ? 'bg-lavender/5' : ''
+                }`}
               >
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-sm font-medium text-gray-200">
-                    @{r.authorHandle ?? 'unknown'}
-                  </span>
-                  {r.postedAt && (
-                    <span className="text-xs text-gray-600">{formatBookmarkDate(r.postedAt)}</span>
+                <div className="flex gap-3">
+                  {selectMode && (
+                    <input
+                      type="checkbox"
+                      checked={selected.has(r.id)}
+                      onChange={() => toggleSelect(r.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="mt-1 accent-lavender shrink-0"
+                    />
                   )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2 mb-1">
+                      <span className="text-sm font-medium text-gray-200">
+                        @{r.authorHandle ?? 'unknown'}
+                      </span>
+                      {r.postedAt && (
+                        <span className="text-xs text-gray-600">{formatBookmarkDate(r.postedAt)}</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed">{r.text}</p>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed">{r.text}</p>
-              </button>
+              </div>
             ))}
           </div>
         </div>
