@@ -2,6 +2,26 @@
 
 ---
 
+## v2.1.10 — Selected JSON Export
+
+**Released:** 2026-06-21
+
+This patch adds selected-bookmark JSON export to the desktop GUI.
+
+### What changed
+
+- **Browse export** — select one or more bookmarks in Browse and click **Export JSON** to download a `.json` file.
+- **Search selection** — Search results now support select mode, per-result checkboxes, select-all, selected count, and **Export JSON**.
+- **Uniform payload shape** — exported JSON is always an array, including single-bookmark exports.
+- **Full records from Search** — Search export fetches each full bookmark record before download, falling back to the search result if a record is unavailable.
+
+### Verification
+
+- `pnpm exec tsx --test tests/gui-bookmark-export.test.ts`
+- `pnpm gui:build`
+
+---
+
 ## v2.1.8 — Classify Progress Feedback
 
 **Released:** 2026-05-28

@@ -9,6 +9,17 @@ Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1]
 
 ---
 
+## [2.1.10] — 2026-06-21
+
+### Added
+- **Selected JSON export** — Browse and Search can export selected bookmarks to a `.json` file
+  - Export payloads are always arrays, including single-bookmark exports
+  - Browse exports selected visible bookmark records
+  - Search now has select mode, checkboxes, select-all, selected count, and JSON export
+  - Search export fetches full bookmark records before download, with search results as fallback
+
+---
+
 ## [2.1.2] — 2026-05-28
 
 ### Added

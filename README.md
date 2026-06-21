@@ -2,7 +2,7 @@
 
 Self-custody for your X/Twitter bookmarks. Sync, search, classify, and explore locally — as a desktop app or a CLI.
 
-**v2.1.8** | [github.com/k0d3d/ft-gui](https://github.com/k0d3d/ft-gui) | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1) | MIT License | Linux · macOS · Windows
+**v2.1.10** | [github.com/k0d3d/ft-gui](https://github.com/k0d3d/ft-gui) | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1) | MIT License | Linux · macOS · Windows
 
 ---
 
@@ -45,8 +45,8 @@ Requires Node.js 20+.
 | Screen | What it does |
 |--------|-------------|
 | Dashboard | Status at a glance — sync state, classified count, quick actions |
-| Browse | Paginated library with multi-select, bulk delete from X, reset classification |
-| Search | Full-text BM25 search across all bookmarks and article text |
+| Browse | Paginated library with multi-select, JSON export, bulk delete from X, reset classification |
+| Search | Full-text BM25 search across all bookmarks and article text, with selectable JSON export |
 | Sync | Start a sync with live progress bar; optionally remove from X after syncing |
 | Classify | LLM classify with two-phase progress (categories → subject domains) |
 | Viz | Interactive Recharts dashboard — 14 panels (rhythm, authors, domains, gems, etc.) |
@@ -55,6 +55,10 @@ Requires Node.js 20+.
 | Bookmark detail | Full tweet, article, quoted tweet, engagement stats |
 | Media | Fetch and download images and video posters |
 | Settings | OpenAI config, index rebuild, snapshots, performance timings |
+
+### New in v2.1.10
+
+**Selected JSON export** — Browse and Search now support selecting one or more bookmarks and exporting them to a `.json` file. The export payload is always an array, even when only one bookmark is selected.
 
 ### New in v2.1.6
 

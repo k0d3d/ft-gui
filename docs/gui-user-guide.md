@@ -1,6 +1,6 @@
 # FT GUI — User Guide
 
-**FT GUI v2.1.8** | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by @afar1
+**FT GUI v2.1.10** | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by @afar1
 
 ---
 
@@ -41,8 +41,9 @@ The home screen. Shows at a glance:
 
 Full paginated list of your bookmark library (30 per page).
 
-**Select mode** — click "Select" in the toolbar to enter multi-select. Check individual rows or use "Select all on page." With items selected, two bulk actions appear:
+**Select mode** — click "Select" in the toolbar to enter multi-select. Check individual rows or use "Select all on page." With items selected, bulk actions appear:
 
+- **Export JSON** — downloads the selected bookmarks as a `.json` file; the payload is always an array, even for one selected bookmark
 - **Reset classification** — clears categories and domains for selected bookmarks so the next classify run re-processes them
 - **Remove from X** — un-bookmarks selected items from your X account; your local copy is kept; progress is shown inline while the job runs
 
@@ -51,6 +52,8 @@ Click any row (outside select mode) to open the Bookmark Detail screen.
 ### Search
 
 Full-text search across bookmark text, author handles, and extracted article content. Uses SQLite FTS5 with BM25 relevance ranking. Press Enter or click Search. Click any result to open detail.
+
+Search results also support **Select** mode. Select one or more results, or use the result-level select-all checkbox, then click **Export JSON** to download the selected bookmarks. Search exports the full bookmark record when available, matching Browse export behavior.
 
 ### Bookmark Detail
 

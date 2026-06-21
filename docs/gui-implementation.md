@@ -57,12 +57,13 @@ The GUI is named **FT GUI**. It is built on top of [fieldtheory-cli](https://git
 |---|---|
 | `main.tsx` | React entry point |
 | `app.tsx` | Navigation state machine, update-ready banner |
+| `bookmark-export.ts` | Renderer-side selected bookmark JSON serialization and download helper |
 | `styles.css` | Tailwind base + custom scrollbar |
 | `hooks/useIpc.ts` | `invoke<T>()` helper and `useIpcEvent()` hook |
 | `components/Sidebar.tsx` | Left-rail navigation; shows `v{__APP_VERSION__}` at bottom |
 | `screens/DashboardScreen.tsx` | Status metrics, quick-action buttons, category pills |
-| `screens/ListScreen.tsx` | Paginated bookmark list with multi-select, bulk delete, reset classification |
-| `screens/SearchScreen.tsx` | Full-text search with BM25 results |
+| `screens/ListScreen.tsx` | Paginated bookmark list with multi-select, JSON export, bulk delete, reset classification |
+| `screens/SearchScreen.tsx` | Full-text search with BM25 results, result selection, JSON export |
 | `screens/BookmarkDetailScreen.tsx` | Full tweet, article, quoted tweet, engagement, single-bookmark actions |
 | `screens/SyncScreen.tsx` | Sync trigger with live progress; "Remove from X after sync" option |
 | `screens/ClassifyScreen.tsx` | LLM classify with two-phase progress; "Reset all first" option |
