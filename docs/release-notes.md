@@ -2,6 +2,26 @@
 
 ---
 
+## v2.1.12 — Media-Aware JSON Export
+
+**Released:** 2026-06-21
+
+This patch enriches selected JSON exports with fetched media metadata.
+
+### What changed
+
+- **Downloaded media in export** — exported bookmarks include `downloadedMedia` when matching post media has already been fetched.
+- **Remote-agent friendly URLs** — each media entry includes the external `sourceUrl` so another machine can download the asset directly.
+- **Local traceability** — media entries also keep `localPath`, `contentType`, `bytes`, and `fetchedAt` when available.
+- **Browse and Search parity** — both selected export paths load media manifest entries before creating the JSON file.
+
+### Verification
+
+- `pnpm exec tsx --test tests/gui-bookmark-export.test.ts`
+- `pnpm gui:build`
+
+---
+
 ## v2.1.11 — Selected Media Fetch
 
 **Released:** 2026-06-21

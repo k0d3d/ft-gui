@@ -31,3 +31,34 @@ test('buildBookmarkExportJson preserves the visible selection order', () => {
     ['first', 'second'],
   );
 });
+
+test('buildBookmarkExportJson includes downloaded media entries by bookmark id', () => {
+  const json = buildBookmarkExportJson(
+    [{ id: 'first', url: 'https://x.com/a/status/1', text: 'First', score: 2 }],
+    new Map([
+      ['first', [
+        {
+          bookmarkId: 'first',
+          tweetId: '1',
+          sourceUrl: 'https://pbs.twimg.com/media/first.jpg',
+          localPath: '/home/user/.fieldtheory/bookmarks/media/1-first.jpg',
+          displayUrl: 'file:///home/user/.fieldtheory/bookmarks/media/1-first.jpg',
+          contentType: 'image/jpeg',
+          bytes: 123,
+          fetchedAt: '2026-06-21T00:00:00.000Z',
+        },
+      ]],
+    ]),
+  );
+
+  const [item] = JSON.parse(json);
+  assert.deepEqual(item.downloadedMedia, [
+    {
+      sourceUrl: 'https://pbs.twimg.com/media/first.jpg',
+      localPath: '/home/user/.fieldtheory/bookmarks/media/1-first.jpg',
+      contentType: 'image/jpeg',
+      bytes: 123,
+      fetchedAt: '2026-06-21T00:00:00.000Z',
+    },
+  ]);
+});

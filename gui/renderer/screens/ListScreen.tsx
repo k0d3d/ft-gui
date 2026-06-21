@@ -11,7 +11,7 @@ import type {
 import type { Screen } from '../app'
 import { Download, Image, Search, Trash2, RotateCcw } from 'lucide-react'
 import { formatBookmarkDate } from '../date-format'
-import { downloadBookmarkJson } from '../bookmark-export'
+import { downloadBookmarkJson, loadDownloadedMediaForExport } from '../bookmark-export'
 
 interface Props {
   onNav: (s: Screen) => void
@@ -158,10 +158,13 @@ export function ListScreen({ onNav }: Props) {
     }
   }
 
-  function exportSelected() {
+  async function exportSelected() {
     if (!selected.size) return
-    downloadBookmarkJson(bookmarks.filter((b) => selected.has(b.id)))
-    setActionMsg(`Exported ${selected.size} bookmark${selected.size > 1 ? 's' : ''}`)
+    const exportItems = bookmarks.filter((b) => selected.has(b.id))
+    const mediaByBookmarkId = await loadDownloadedMediaForExport(exportItems)
+    downloadBookmarkJson(exportItems, mediaByBookmarkId)
+    const mediaCount = Array.from(mediaByBookmarkId.values()).reduce((count, media) => count + media.length, 0)
+    setActionMsg(`Exported ${selected.size} bookmark${selected.size > 1 ? 's' : ''}${mediaCount ? ` with ${mediaCount} media asset${mediaCount === 1 ? '' : 's'}` : ''}`)
     setTimeout(() => setActionMsg(''), 3000)
   }
 

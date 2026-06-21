@@ -57,7 +57,7 @@ The GUI is named **FT GUI**. It is built on top of [fieldtheory-cli](https://git
 |---|---|
 | `main.tsx` | React entry point |
 | `app.tsx` | Navigation state machine, update-ready banner |
-| `bookmark-export.ts` | Renderer-side selected bookmark JSON serialization and download helper |
+| `bookmark-export.ts` | Renderer-side selected bookmark JSON serialization and download helper; enriches exports with downloaded media metadata from `media:bookmark` |
 | `styles.css` | Tailwind base + custom scrollbar |
 | `hooks/useIpc.ts` | `invoke<T>()` helper and `useIpcEvent()` hook |
 | `components/Sidebar.tsx` | Left-rail navigation; shows `v{__APP_VERSION__}` at bottom |

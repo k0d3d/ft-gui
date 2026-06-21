@@ -2,7 +2,7 @@
 
 Self-custody for your X/Twitter bookmarks. Sync, search, classify, and explore locally — as a desktop app or a CLI.
 
-**v2.1.11** | [github.com/k0d3d/ft-gui](https://github.com/k0d3d/ft-gui) | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1) | MIT License | Linux · macOS · Windows
+**v2.1.12** | [github.com/k0d3d/ft-gui](https://github.com/k0d3d/ft-gui) | Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1](https://github.com/afar1) | MIT License | Linux · macOS · Windows
 
 ---
 
@@ -55,6 +55,10 @@ Requires Node.js 20+.
 | Bookmark detail | Full tweet, downloaded media, article, quoted tweet, engagement stats |
 | Media | Fetch and download images and video posters |
 | Settings | OpenAI config, index rebuild, snapshots, performance timings |
+
+### New in v2.1.12
+
+**Media-aware JSON export** — exported bookmarks now include a `downloadedMedia` array when matching media has already been fetched. Each entry includes the external `sourceUrl` so remote agents can download the asset directly, plus local metadata for traceability.
 
 ### New in v2.1.11
 

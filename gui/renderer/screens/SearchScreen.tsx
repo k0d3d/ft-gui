@@ -4,7 +4,7 @@ import type { BookmarkTimelineItem, MediaProgressEvent, SearchResult } from '../
 import type { Screen } from '../app'
 import { Download, Image, Search } from 'lucide-react'
 import { formatBookmarkDate } from '../date-format'
-import { downloadBookmarkJson } from '../bookmark-export'
+import { downloadBookmarkJson, loadDownloadedMediaForExport } from '../bookmark-export'
 
 interface Props {
   onNav: (s: Screen) => void
@@ -91,8 +91,10 @@ export function SearchScreen({ onNav }: Props) {
       selectedResults.map((r) => invoke<BookmarkTimelineItem | null>('bookmarks:get', r.id)),
     )
     const exportItems = fullBookmarks.map((bm, index) => bm ?? selectedResults[index])
-    downloadBookmarkJson(exportItems)
-    setActionMsg(`Exported ${exportItems.length} bookmark${exportItems.length > 1 ? 's' : ''}`)
+    const mediaByBookmarkId = await loadDownloadedMediaForExport(exportItems)
+    downloadBookmarkJson(exportItems, mediaByBookmarkId)
+    const mediaCount = Array.from(mediaByBookmarkId.values()).reduce((count, media) => count + media.length, 0)
+    setActionMsg(`Exported ${exportItems.length} bookmark${exportItems.length > 1 ? 's' : ''}${mediaCount ? ` with ${mediaCount} media asset${mediaCount === 1 ? '' : 's'}` : ''}`)
     setTimeout(() => setActionMsg(''), 3000)
   }
 

@@ -9,6 +9,16 @@ Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1]
 
 ---
 
+## [2.1.12] — 2026-06-21
+
+### Added
+- **Media-aware JSON export** — selected bookmark exports include `downloadedMedia` when matching media has already been fetched
+  - Media entries include external `sourceUrl` for remote download workflows
+  - Media entries also include `localPath`, `contentType`, `bytes`, and `fetchedAt` when available
+  - Browse and Search export paths both enrich selected bookmark records from the media manifest
+
+---
+
 ## [2.1.11] — 2026-06-21
 
 ### Added
