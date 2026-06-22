@@ -119,6 +119,8 @@ Numeric summary: total bookmarks, unique voices, date range. Top 15 authors with
 
 Downloads images and video poster frames for bookmarks. Set an optional limit to cap the run. Media saves to `~/.fieldtheory/bookmarks/media/`. For a smaller targeted fetch, use **Fetch media** from Browse or Search select mode.
 
+The screen also shows **Recent downloads**, a gallery of the newest locally downloaded post media. Click a preview or **Open** to open the local file with your OS default app. Use **Reveal** to show the file in the file manager, or **Source** to open the original remote media URL in your browser.
+
 ### Settings
 
 - **Data location** — shows the path to `~/.fieldtheory/bookmarks/` and your total bookmark count

@@ -79,6 +79,13 @@ export interface BookmarkMediaView extends DownloadedBookmarkMedia {
   displayUrl: string
 }
 
+export interface RecentMediaView extends BookmarkMediaView {}
+
+export interface MediaEntryRef {
+  bookmarkId: string
+  sourceUrl: string
+}
+
 export interface OpenAiSettingsView {
   baseUrl: string
   model: string
@@ -143,4 +150,8 @@ export interface IpcChannels {
   'classify:llm:start': [opts: ClassifyGuiOptions, result: { jobId: string }]
   'media:fetch:start': [opts: { limit?: number; bookmarkIds?: string[]; skipProfileImages?: boolean }, result: { jobId: string }]
   'media:bookmark': [bookmarkId: string, result: BookmarkMediaView[]]
+  'media:recent': [opts: { limit?: number } | undefined, result: RecentMediaView[]]
+  'media:openLocal': [ref: MediaEntryRef, result: { ok: true }]
+  'media:revealLocal': [ref: MediaEntryRef, result: { ok: true }]
+  'media:openRemote': [ref: MediaEntryRef, result: { ok: true }]
 }

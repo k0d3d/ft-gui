@@ -3,6 +3,7 @@ import { invoke } from '../hooks/useIpc'
 import type { BookmarkMediaView, BookmarkTimelineItem } from '../../main/ipc-types'
 import { ArrowLeft, ExternalLink, RotateCcw } from 'lucide-react'
 import { formatBookmarkDate } from '../date-format'
+import { MediaPreviewCard } from '../components/MediaPreviewCard'
 
 interface Props {
   id: string
@@ -74,27 +75,9 @@ export function BookmarkDetailScreen({ id, onBack }: Props) {
       {media.length > 0 && (
         <div className="mb-6">
           <div className="grid grid-cols-2 gap-3">
-            {media.map((item) => {
-              const isVideo = item.contentType?.includes('video') || item.localPath.toLowerCase().endsWith('.mp4')
-              return (
-                <div key={`${item.tweetId}-${item.sourceUrl}`} className="overflow-hidden rounded-lg border border-white/[0.06] bg-white/[0.03]">
-                  {isVideo ? (
-                    <video
-                      src={item.displayUrl}
-                      controls
-                      className="w-full max-h-80 bg-black object-contain"
-                    />
-                  ) : (
-                    <img
-                      src={item.displayUrl}
-                      alt=""
-                      className="w-full max-h-80 object-contain bg-black"
-                      loading="lazy"
-                    />
-                  )}
-                </div>
-              )
-            })}
+            {media.map((item) => (
+              <MediaPreviewCard key={`${item.tweetId}-${item.sourceUrl}`} item={item} />
+            ))}
           </div>
         </div>
       )}
