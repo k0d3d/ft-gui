@@ -49,8 +49,8 @@ The GUI is named **FT GUI**. It is built on top of [fieldtheory-cli](https://git
 |---|---|
 | `main.ts` | BrowserWindow lifecycle, single-instance lock, auto-updater, DevTools in dev mode |
 | `preload.ts` | contextBridge exposing `window.ftApi` (invoke / on / off); built as CJS |
-| `ipc-types.ts` | Typed IPC channel surface shared by main and renderer, including media fetch/detail payloads |
-| `ipc-handlers.ts` | All `ipcMain.handle()` registrations; imports `src/` directly; starts selected media fetch jobs and exposes downloaded media URLs |
+| `ipc-types.ts` | Typed IPC channel surface shared by main and renderer, including media fetch/detail/open payloads |
+| `ipc-handlers.ts` | All `ipcMain.handle()` registrations; imports `src/` directly; starts selected media fetch jobs, exposes downloaded media URLs, and opens manifest-backed media targets |
 
 #### React renderer (`gui/renderer/`)
 | File | Purpose |
@@ -60,6 +60,7 @@ The GUI is named **FT GUI**. It is built on top of [fieldtheory-cli](https://git
 | `bookmark-export.ts` | Renderer-side selected bookmark JSON serialization and download helper; enriches exports with downloaded media metadata from `media:bookmark` |
 | `styles.css` | Tailwind base + custom scrollbar |
 | `hooks/useIpc.ts` | `invoke<T>()` helper and `useIpcEvent()` hook |
+| `components/MediaPreviewCard.tsx` | Shared downloaded-media preview card with local open, file reveal, and remote source actions |
 | `components/Sidebar.tsx` | Left-rail navigation; shows `v{__APP_VERSION__}` at bottom |
 | `screens/DashboardScreen.tsx` | Status metrics, quick-action buttons, category pills |
 | `screens/ListScreen.tsx` | Paginated bookmark list with multi-select, JSON export, selected media fetch, bulk delete, reset classification |
@@ -72,7 +73,7 @@ The GUI is named **FT GUI**. It is built on top of [fieldtheory-cli](https://git
 | `screens/CategoriesScreen.tsx` | Category bar chart |
 | `screens/DomainsScreen.tsx` | Subject domain bar chart |
 | `screens/FoldersScreen.tsx` | X folder distribution |
-| `screens/MediaScreen.tsx` | Fetch media with progress |
+| `screens/MediaScreen.tsx` | Fetch media with progress and recent downloaded-media gallery |
 | `screens/SettingsScreen.tsx` | Data path, index rebuild |
 
 #### New source files (`src/`)

@@ -2,6 +2,27 @@
 
 ---
 
+## v2.1.13 — Recent Media Gallery
+
+**Released:** 2026-06-22
+
+This patch makes locally downloaded bookmark media easier to browse and open from the GUI.
+
+### What changed
+
+- **Recent downloads gallery** — the Media screen now shows the newest downloaded post media from the local media manifest.
+- **Local-first open action** — clicking a media preview, or the **Open** button, opens the downloaded file with the OS default app.
+- **Filesystem and source links** — each media card can reveal the local file in the file manager or open the original remote source URL.
+- **Detail screen parity** — Bookmark Detail uses the same media card controls for downloaded images and videos.
+
+### Verification
+
+- `pnpm exec tsx --test tests/bookmark-media.test.ts`
+- `pnpm run build`
+- `pnpm gui:build`
+
+---
+
 ## v2.1.12 — Media-Aware JSON Export
 
 **Released:** 2026-06-21

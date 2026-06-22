@@ -4,7 +4,7 @@ import { mkdtemp, writeFile } from 'node:fs/promises';
 import { rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fetchBookmarkMediaBatch, getDownloadedMediaForBookmark } from '../src/bookmark-media.js';
+import { fetchBookmarkMediaBatch, getDownloadedMediaForBookmark, getRecentDownloadedMedia } from '../src/bookmark-media.js';
 
 async function withMediaDataDir(records: any[], fn: () => Promise<void>): Promise<void> {
   const dir = await mkdtemp(path.join(tmpdir(), 'ft-media-test-'));
@@ -793,6 +793,88 @@ test('getDownloadedMediaForBookmark returns downloaded post media entries for de
     const media = await getDownloadedMediaForBookmark('1');
     assert.equal(media.length, 1);
     assert.equal(media[0].sourceUrl, 'https://pbs.twimg.com/media/detail.jpg');
+  });
+});
+
+test('getRecentDownloadedMedia returns newest downloaded post media up to limit', async () => {
+  const records = [{
+    id: '1',
+    tweetId: '1',
+    url: 'https://x.com/alice/status/1',
+    text: 'recent media',
+    syncedAt: '2026-04-09T00:00:00.000Z',
+    mediaObjects: [],
+    links: [],
+    tags: [],
+    ingestedVia: 'graphql',
+  }];
+
+  await withMediaDataDir(records, async () => {
+    await writeFile(path.join(process.env.FT_DATA_DIR!, 'media-manifest.json'), JSON.stringify({
+      schemaVersion: 1,
+      generatedAt: '2026-06-21T00:00:00.000Z',
+      limit: 4,
+      maxBytes: 1024,
+      processed: 4,
+      downloaded: 3,
+      skippedTooLarge: 0,
+      failed: 1,
+      entries: [
+        {
+          bookmarkId: '1',
+          tweetId: '1',
+          tweetUrl: 'https://x.com/alice/status/1',
+          authorHandle: 'alice',
+          authorName: 'Alice',
+          sourceUrl: 'https://pbs.twimg.com/media/old.jpg',
+          localPath: path.join(process.env.FT_DATA_DIR!, 'media', '1-old.jpg'),
+          contentType: 'image/jpeg',
+          bytes: 4,
+          status: 'downloaded',
+          fetchedAt: '2026-06-20T00:00:00.000Z',
+        },
+        {
+          bookmarkId: '1',
+          tweetId: '1',
+          tweetUrl: 'https://x.com/alice/status/1',
+          sourceUrl: 'https://pbs.twimg.com/profile_images/123/avatar_400x400.jpg',
+          localPath: path.join(process.env.FT_DATA_DIR!, 'media', 'avatar.jpg'),
+          contentType: 'image/jpeg',
+          bytes: 4,
+          status: 'downloaded',
+          fetchedAt: '2026-06-22T00:00:00.000Z',
+        },
+        {
+          bookmarkId: '1',
+          tweetId: '1',
+          tweetUrl: 'https://x.com/alice/status/1',
+          sourceUrl: 'https://pbs.twimg.com/media/failed.jpg',
+          status: 'failed',
+          reason: 'HTTP 404',
+          fetchedAt: '2026-06-23T00:00:00.000Z',
+        },
+        {
+          bookmarkId: '2',
+          tweetId: '2',
+          tweetUrl: 'https://x.com/bob/status/2',
+          authorHandle: 'bob',
+          sourceUrl: 'https://video.twimg.com/ext_tw_video/new.mp4',
+          localPath: path.join(process.env.FT_DATA_DIR!, 'media', '2-new.mp4'),
+          contentType: 'video/mp4',
+          bytes: 8,
+          status: 'downloaded',
+          fetchedAt: '2026-06-21T00:00:00.000Z',
+        },
+      ],
+    }));
+
+    const media = await getRecentDownloadedMedia(2);
+    assert.deepEqual(media.map((entry) => entry.sourceUrl), [
+      'https://video.twimg.com/ext_tw_video/new.mp4',
+      'https://pbs.twimg.com/media/old.jpg',
+    ]);
+    assert.equal(media[0].authorHandle, 'bob');
+    assert.equal(media[1].tweetUrl, 'https://x.com/alice/status/1');
   });
 });
 

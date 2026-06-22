@@ -9,6 +9,16 @@ Built on [fieldtheory-cli](https://github.com/afar1/fieldtheory-cli) by [@afar1]
 
 ---
 
+## [2.1.13] — 2026-06-22
+
+### Added
+- **Recent media gallery** — the Media screen now shows the newest downloaded post media from the local manifest
+  - Gallery entries are sorted by fetch time and exclude profile images, failed downloads, and skipped assets
+  - Media previews can open the local file, reveal it in the file manager, or open the original remote source
+  - Bookmark Detail uses the same media controls for downloaded post media
+
+---
+
 ## [2.1.12] — 2026-06-21
 
 ### Added

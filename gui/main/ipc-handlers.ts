@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from 'electron'
+import { ipcMain, BrowserWindow, shell } from 'electron'
 import { pathToFileURL } from 'node:url'
 import {
   listBookmarks,
@@ -19,7 +19,7 @@ import { getBookmarkStatusView } from '../../src/bookmarks-service.js'
 import { dataDir } from '../../src/paths.js'
 import { syncBookmarksGraphQL } from '../../src/graphql-bookmarks.js'
 import { classifyWithLlm, classifyDomainsWithLlm } from '../../src/bookmark-classify-llm.js'
-import { fetchBookmarkMediaBatch, getDownloadedMediaForBookmark } from '../../src/bookmark-media.js'
+import { fetchBookmarkMediaBatch, getDownloadedMediaEntry, getDownloadedMediaForBookmark, getRecentDownloadedMedia } from '../../src/bookmark-media.js'
 import { resolveEngine } from '../../src/engine.js'
 import { getVizData } from '../../src/bookmarks-viz.js'
 import { runHealthChecks, autoHealDeleteQueryId } from '../../src/health-check.js'
@@ -239,5 +239,35 @@ export function registerIpcHandlers(win: BrowserWindow): void {
       ...entry,
       displayUrl: pathToFileURL(entry.localPath).toString(),
     }))
+  })
+
+  ipcMain.handle('media:recent', async (_e, opts: { limit?: number } = {}) => {
+    const media = await getRecentDownloadedMedia(opts.limit)
+    return media.map((entry) => ({
+      ...entry,
+      displayUrl: pathToFileURL(entry.localPath).toString(),
+    }))
+  })
+
+  ipcMain.handle('media:openLocal', async (_e, ref: { bookmarkId: string; sourceUrl: string }) => {
+    const entry = await getDownloadedMediaEntry(ref.bookmarkId, ref.sourceUrl)
+    if (!entry) throw new Error('Media entry not found in local manifest')
+    const error = await shell.openPath(entry.localPath)
+    if (error) throw new Error(error)
+    return { ok: true }
+  })
+
+  ipcMain.handle('media:revealLocal', async (_e, ref: { bookmarkId: string; sourceUrl: string }) => {
+    const entry = await getDownloadedMediaEntry(ref.bookmarkId, ref.sourceUrl)
+    if (!entry) throw new Error('Media entry not found in local manifest')
+    shell.showItemInFolder(entry.localPath)
+    return { ok: true }
+  })
+
+  ipcMain.handle('media:openRemote', async (_e, ref: { bookmarkId: string; sourceUrl: string }) => {
+    const entry = await getDownloadedMediaEntry(ref.bookmarkId, ref.sourceUrl)
+    if (!entry) throw new Error('Media entry not found in local manifest')
+    await shell.openExternal(entry.sourceUrl)
+    return { ok: true }
   })
 }

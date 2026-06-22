@@ -52,9 +52,13 @@ Requires Node.js 20+.
 | Viz | Interactive Recharts dashboard — 14 panels (rhythm, authors, domains, gems, etc.) |
 | Stats | Author leaderboard, language breakdown |
 | Categories / Domains / Folders | Distribution charts |
-| Bookmark detail | Full tweet, downloaded media, article, quoted tweet, engagement stats |
-| Media | Fetch and download images and video posters |
+| Bookmark detail | Full tweet, downloaded media with local/source actions, article, quoted tweet, engagement stats |
+| Media | Fetch and download images/video posters, plus recent local media gallery |
 | Settings | OpenAI config, index rebuild, snapshots, performance timings |
+
+### New in v2.1.13
+
+**Recent media gallery** — Media now shows the newest locally downloaded post media. Click a preview or **Open** to open the local file, **Reveal** to show it in the file manager, or **Source** to open the original remote media URL.
 
 ### New in v2.1.12
 

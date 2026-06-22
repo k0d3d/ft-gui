@@ -46,6 +46,9 @@ export interface MediaFetchProgress {
 export interface DownloadedBookmarkMedia {
   bookmarkId: string;
   tweetId: string;
+  tweetUrl?: string;
+  authorHandle?: string;
+  authorName?: string;
   sourceUrl: string;
   localPath: string;
   contentType?: string;
@@ -234,6 +237,27 @@ function buildCoveredProfileImageUrls(previous: MediaFetchManifest | null, maxBy
       .filter((entry) => isCoveredEntry(entry, maxBytes))
       .map((entry) => entry.sourceUrl),
   );
+}
+
+function isDownloadedPostMediaEntry(entry: MediaFetchEntry): boolean {
+  return entry.status === 'downloaded'
+    && Boolean(entry.localPath)
+    && !entry.sourceUrl.includes('/profile_images/');
+}
+
+function toDownloadedBookmarkMedia(entry: MediaFetchEntry): DownloadedBookmarkMedia {
+  return {
+    bookmarkId: entry.bookmarkId,
+    tweetId: entry.tweetId,
+    tweetUrl: entry.tweetUrl,
+    authorHandle: entry.authorHandle,
+    authorName: entry.authorName,
+    sourceUrl: entry.sourceUrl,
+    localPath: entry.localPath!,
+    contentType: entry.contentType,
+    bytes: entry.bytes,
+    fetchedAt: entry.fetchedAt,
+  };
 }
 
 function hasPendingMediaTarget(
@@ -518,16 +542,37 @@ export async function getDownloadedMediaForBookmark(bookmarkId: string): Promise
 
   return manifest.entries
     .filter((entry) => entry.bookmarkId === bookmarkId)
-    .filter((entry) => entry.status === 'downloaded')
-    .filter((entry) => Boolean(entry.localPath))
-    .filter((entry) => !entry.sourceUrl.includes('/profile_images/'))
-    .map((entry) => ({
-      bookmarkId: entry.bookmarkId,
-      tweetId: entry.tweetId,
-      sourceUrl: entry.sourceUrl,
-      localPath: entry.localPath!,
-      contentType: entry.contentType,
-      bytes: entry.bytes,
-      fetchedAt: entry.fetchedAt,
-    }));
+    .filter(isDownloadedPostMediaEntry)
+    .map(toDownloadedBookmarkMedia);
+}
+
+export async function getRecentDownloadedMedia(limit = 24): Promise<DownloadedBookmarkMedia[]> {
+  const manifest = await loadManifest();
+  if (!manifest) return [];
+
+  const normalizedLimit = typeof limit === 'number' && Number.isFinite(limit)
+    ? Math.max(0, Math.floor(limit))
+    : 24;
+
+  return manifest.entries
+    .filter(isDownloadedPostMediaEntry)
+    .sort((a, b) => Date.parse(b.fetchedAt) - Date.parse(a.fetchedAt))
+    .slice(0, normalizedLimit)
+    .map(toDownloadedBookmarkMedia);
+}
+
+export async function getDownloadedMediaEntry(
+  bookmarkId: string,
+  sourceUrl: string,
+): Promise<DownloadedBookmarkMedia | null> {
+  const manifest = await loadManifest();
+  if (!manifest) return null;
+
+  const entry = manifest.entries.find((candidate) =>
+    candidate.bookmarkId === bookmarkId
+    && candidate.sourceUrl === sourceUrl
+    && isDownloadedPostMediaEntry(candidate)
+  );
+
+  return entry ? toDownloadedBookmarkMedia(entry) : null;
 }
